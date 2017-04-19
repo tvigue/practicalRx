@@ -1,5 +1,6 @@
 package org.dogepool.practicalrx.services;
 
+import static com.couchbase.client.java.query.dsl.Expression.i;
 import static com.couchbase.client.java.query.dsl.Expression.s;
 import static com.couchbase.client.java.query.dsl.Expression.x;
 
@@ -47,8 +48,8 @@ public class UserService {
     public Observable<User> findAll() {
         if (useCouchbaseForFindAll && couchbaseBucket != null) {
             try {
-                Statement statement = Select.select("avatarId", "bio", "displayName", "id", "nickname").from(x("default"))
-                                            .where(x("type").eq(s("user"))).groupBy(x("displayName"));
+                Statement statement = Select.select("avatarId", "bio", "displayName", "id", "nickname").from(i(couchbaseBucket.name()))
+                                            .where(x("type").eq(s("user")))/*.groupBy(x("displayName"))*/;
                 N1qlQueryResult queryResult = couchbaseBucket.query(statement);
                 List<User> users = new ArrayList<User>();
                 for (N1qlQueryRow qr : queryResult) {

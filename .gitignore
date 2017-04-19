@@ -1,6 +1,6 @@
 # Created by https://www.gitignore.io
 
-application.properties
+#application.properties
 
 ### Maven ###
 target/
