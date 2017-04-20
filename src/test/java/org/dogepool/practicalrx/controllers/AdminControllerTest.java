@@ -1,6 +1,5 @@
 package org.dogepool.practicalrx.controllers;
 
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
@@ -30,113 +29,110 @@ import org.springframework.web.context.WebApplicationContext;
 @WebAppConfiguration
 public class AdminControllerTest {
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
+	@Autowired
+	private WebApplicationContext webApplicationContext;
 
-    private MockMvc mockMvc;
+	private MockMvc mockMvc;
 
-    @Before
-    public void setup() throws Exception {
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-    }
+	@Before
+	public void setup() throws Exception {
+		this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+	}
 
+	@Test
+	public void testRegisterMiningBadUser() throws Exception {
+		MvcResult mvcResult = mockMvc.perform(post("/admin/mining/1024"))
+				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
 
-    @Test
-    public void testRegisterMiningBadUser() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(post("/admin/mining/1024"))
-                                     .andExpect(status().isOk())
-                                     .andExpect(request().asyncStarted())
-                                     .andReturn();
+		mockMvc.perform(asyncDispatch(mvcResult)).andExpect(status().isNotFound());
+	}
 
-        mockMvc.perform(asyncDispatch(mvcResult))
-               .andExpect(status().isNotFound());
-    }
+	@Test
+	public void testRegisterMiningGoodUser() throws Exception {
+		MvcResult mvcResult = mockMvc.perform(post("/admin/mining/1"))
+				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
 
-    @Test
-    public void testRegisterMiningGoodUser() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(post("/admin/mining/1"))
-                                     .andExpect(status().isOk())
-                                     .andExpect(request().asyncStarted())
-                                     .andReturn();
+		mockMvc.perform(asyncDispatch(mvcResult))
+				.andExpect(status().isAccepted())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().string(startsWith("[")));
+	}
 
-        mockMvc.perform(asyncDispatch(mvcResult))
-               .andExpect(status().isAccepted())
-               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-               .andExpect(content().string(startsWith("[")));
-    }
+	@Test
+	public void testDeregisterMiningBadUser() throws Exception {
+		MvcResult mvcResult = mockMvc.perform(delete("/admin/mining/1024"))
+				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
 
-    @Test
-    public void testDeregisterMiningBadUser() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(delete("/admin/mining/1024"))
-                                     .andExpect(status().isOk())
-                                     .andExpect(request().asyncStarted())
-                                     .andReturn();
+		mockMvc.perform(asyncDispatch(mvcResult)).andExpect(status().isNotFound());
+	}
 
-        mockMvc.perform(asyncDispatch(mvcResult))
-               .andExpect(status().isNotFound());
-    }
+	@Test
+	public void testDeregisterMiningGoodUser() throws Exception {
+		MvcResult mvcResult = mockMvc.perform(delete("/admin/mining/1"))
+				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
 
-    @Test
-    public void testDeregisterMiningGoodUser() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(delete("/admin/mining/1"))
-                                     .andExpect(status().isOk())
-                                     .andExpect(request().asyncStarted())
-                                     .andReturn();
+		mockMvc.perform(asyncDispatch(mvcResult))
+				.andExpect(status().isAccepted())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().string(startsWith("[")));
+	}
 
-        mockMvc.perform(asyncDispatch(mvcResult))
-               .andExpect(status().isAccepted())
-               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-               .andExpect(content().string(startsWith("[")));
-    }
+	@Test
+	public void testCost() throws Exception {
+		MvcResult mvcResult = mockMvc.perform(get("/admin/cost/"))
+				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
 
-    @Test
-    public void testCost() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(get("/admin/cost/"))
-                                     .andExpect(status().isOk())
-                                     .andExpect(request().asyncStarted())
-                                     .andReturn();
+		mockMvc.perform(asyncDispatch(mvcResult))
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().string(containsString("\"cost\"")))
+				.andExpect(content().string(containsString("\"month\"")))
+				.andExpect(content().string(containsString("\"currency\"")))
+				.andExpect(content().string(containsString("\"currencySign\"")));
 
-        mockMvc.perform(asyncDispatch(mvcResult))
-               .andExpect(status().isOk())
-               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-               .andExpect(content().string(containsString("\"cost\"")))
-               .andExpect(content().string(containsString("\"month\"")))
-               .andExpect(content().string(containsString("\"currency\"")))
-               .andExpect(content().string(containsString("\"currencySign\"")));
+	}
 
-    }
+	@Test
+	public void testCostMonthName() throws Exception {
+		MvcResult mvcResult = mockMvc.perform(get("/admin/cost/2015/JANUARY"))
+				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
 
-    @Test
-    public void testCostMonthName() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(get("/admin/cost/2015/JANUARY"))
-                                     .andExpect(status().isOk())
-                                     .andExpect(request().asyncStarted())
-                                     .andReturn();
+		mockMvc.perform(asyncDispatch(mvcResult))
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().json(
+						"{\"cost\":2115,\"month\":\"JANUARY 2015\"," + "\"currencySign\":\"$\",\"currency\":\"USD\"}"));
+	}
 
-        mockMvc.perform(asyncDispatch(mvcResult))
-               .andExpect(status().isOk())
-               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-               .andExpect(content().json("{\"cost\":2115,\"month\":\"JANUARY 2015\"," +
-                       "\"currencySign\":\"$\",\"currency\":\"USD\"}"));
-    }
+	@Test
+	public void testCostMonthBadName() throws Exception {
+		mockMvc.perform(get("/admin/cost/2015/FOO")).andExpect(status().isBadRequest());
+	}
 
-    @Test
-    public void testCostMonthBadName() throws Exception {
-        mockMvc.perform(get("/admin/cost/2015/FOO"))
-               .andExpect(status().isBadRequest());
-    }
+	@Test
+	public void testCostMonthNumber() throws Exception {
+		MvcResult mvcResult = mockMvc.perform(get("/admin/cost/2015-01"))
+				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
 
-    @Test
-    public void testCostMonthNumber() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(get("/admin/cost/2015-01"))
-                                     .andExpect(status().isOk())
-                                     .andExpect(request().asyncStarted())
-                                     .andReturn();
+		mockMvc.perform(asyncDispatch(mvcResult))
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().json(
+						"{\"cost\":2115,\"month\":\"JANUARY 2015\"," + "\"currencySign\":\"$\",\"currency\":\"USD\"}"));
+	}
 
-        mockMvc.perform(asyncDispatch(mvcResult))
-               .andExpect(status().isOk())
-               .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-               .andExpect(content().json("{\"cost\":2115,\"month\":\"JANUARY 2015\"," +
-                       "\"currencySign\":\"$\",\"currency\":\"USD\"}"));
-    }
 }

@@ -10,15 +10,16 @@ import rx.Observable;
 @Service
 public class PoolRateService {
 
-    @Autowired
-    private PoolService poolService;
+	@Autowired
+	private PoolService poolService;
 
-    @Autowired
-    private HashrateService hashrateService;
+	@Autowired
+	private HashrateService hashrateService;
 
-    public Observable<Double> poolGigaHashrate() {
-        return poolService.miningUsers()
-                .flatMap(u -> hashrateService.hashrateFor(u))
-                .reduce(0d, (pools, users) -> pools + users);
-    }
+	public Observable<Double> poolGigaHashrate() {
+		return poolService.miningUsers()
+				.flatMap(u -> hashrateService.hashrateFor(u))
+				.reduce(0d, (pools, users) -> pools + users);
+	}
+
 }

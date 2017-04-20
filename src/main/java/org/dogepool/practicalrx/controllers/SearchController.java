@@ -15,21 +15,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
 public class SearchController {
 
-    @Autowired
-    private SearchService service;
+	@Autowired
+	private SearchService service;
 
-    @RequestMapping("user/{pattern}")
-    public List<User> searchByName(@PathVariable String pattern) {
-        return service.findByName(pattern).toList().toBlocking().first();
-    }
+	@RequestMapping("user/{pattern}")
+	public List<User> searchByName(@PathVariable String pattern) {
+		return service.findByName(pattern).toList().toBlocking().first();
+	}
 
-    @RequestMapping("user/coins/{minCoins}")
-    public List<UserStat> searchByCoins(@PathVariable long minCoins) {
-        return this.searchByCoins(minCoins, -1L);
-    }
+	@RequestMapping("user/coins/{minCoins}")
+	public List<UserStat> searchByCoins(@PathVariable long minCoins) {
+		return this.searchByCoins(minCoins, -1L);
+	}
 
-    @RequestMapping("user/coins/{minCoins}/{maxCoins}")
-    private List<UserStat> searchByCoins(@PathVariable long minCoins, @PathVariable long maxCoins) {
-        return service.findByCoins(minCoins, maxCoins).toList().toBlocking().first();
-    }
+	@RequestMapping("user/coins/{minCoins}/{maxCoins}")
+	private List<UserStat> searchByCoins(@PathVariable long minCoins, @PathVariable long maxCoins) {
+		return service.findByCoins(minCoins, maxCoins).toList().toBlocking().first();
+	}
+
 }

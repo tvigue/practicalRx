@@ -10,4 +10,5 @@ public enum ErrorCategory {
     USERS,
     RANKING,
     EXCHANGE_RATE
+
 }

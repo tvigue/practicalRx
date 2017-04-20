@@ -14,23 +14,22 @@ import rx.Observable;
 @Service
 public class AdminService {
 
-    private LongAdder currentCosts = new LongAdder();
+	private LongAdder currentCosts = new LongAdder();
 
-    public void addCost(int cost) {
-        this.currentCosts.add(cost);
-    }
+	public void addCost(int cost) {
+		this.currentCosts.add(cost);
+	}
 
-    public Observable<BigInteger> costForMonth(int year, Month month) {
-        return Observable.just(LocalDate.now())
-                .map(now -> {
-                    if (year == now.getYear() && month == now.getMonth()) {
-                        return BigInteger.valueOf(currentCosts.longValue());
-                    }
-                    if (year > now.getYear()
-                            || year == now.getYear() && month.getValue() > now.getMonthValue()) {
-                        return BigInteger.ZERO;
-                    }
-                    return BigInteger.valueOf(year + month.getValue() * 100);
-                });
-    }
+	public Observable<BigInteger> costForMonth(int year, Month month) {
+		return Observable.just(LocalDate.now()).map(now -> {
+			if (year == now.getYear() && month == now.getMonth()) {
+				return BigInteger.valueOf(currentCosts.longValue());
+			}
+			if (year > now.getYear() || year == now.getYear() && month.getValue() > now.getMonthValue()) {
+				return BigInteger.ZERO;
+			}
+			return BigInteger.valueOf(year + month.getValue() * 100);
+		});
+	}
+
 }

@@ -1,9 +1,9 @@
 package org.dogepool.practicalrx.controllers;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
-import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
@@ -30,54 +30,56 @@ import org.springframework.web.context.WebApplicationContext;
 @WebAppConfiguration
 public class RateControllerTest {
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
+	@Autowired
+	private WebApplicationContext webApplicationContext;
 
-    private MockMvc mockMvc;
+	private MockMvc mockMvc;
 
-    @Before
-    public void setup() throws Exception {
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-    }
+	@Before
+	public void setup() throws Exception {
+		this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+	}
 
-    @Test
-    public void testRateEuro() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(get("/rate/EUR").accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(request().asyncStarted())
-                .andExpect(request().asyncResult(instanceOf(ExchangeRate.class)))
-                .andReturn();
+	@Test
+	public void testRateEuro() throws Exception {
+		MvcResult mvcResult = mockMvc.perform(get("/rate/EUR").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andExpect(request().asyncResult(instanceOf(ExchangeRate.class)))
+				.andReturn();
 
-        mockMvc.perform(asyncDispatch(mvcResult))
-               .andExpect(status().isOk())
-               .andExpect(content().string(startsWith("{\"moneyCodeFrom\":\"DOGE\",\"moneyCodeTo\":\"EUR\",\"exchangeRate\":")));
-    }
+		mockMvc.perform(asyncDispatch(mvcResult)).andExpect(status().isOk()).andExpect(
+				content().string(startsWith("{\"moneyCodeFrom\":\"DOGE\",\"moneyCodeTo\":\"EUR\",\"exchangeRate\":")));
+	}
 
-    @Test
-    public void testRateBadCurrencyTooLong() throws Exception {
-        //Note: the configuration of test has a timeout of 6 seconds, which will always succeed
-        MvcResult mvcResult = mockMvc.perform(get("/rate/EURO").accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andExpect(request().asyncStarted())
-                .andExpect(request().asyncResult(instanceOf(DogePoolException.class)))
-                .andReturn();
+	@Test
+	public void testRateBadCurrencyTooLong() throws Exception {
+		// Note: the configuration of test has a timeout of 6 seconds, which
+		// will always succeed
+		MvcResult mvcResult = mockMvc.perform(get("/rate/EURO").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andExpect(request().asyncResult(instanceOf(DogePoolException.class)))
+				.andReturn();
 
-        mockMvc.perform(asyncDispatch(mvcResult))
-               .andExpect(status().isNotFound())
-               .andExpect(content().string(containsString("Unknown currency EURO")));
-    }
+		mockMvc.perform(asyncDispatch(mvcResult))
+				.andExpect(status().isNotFound())
+				.andExpect(content().string(containsString("Unknown currency EURO")));
+	}
 
-    @Test
-    public void testRateBadCurrencyBadCase() throws Exception {
-        //Note: the configuration of test has a timeout of 6 seconds, which will always succeed
-        MvcResult mvcResult = mockMvc.perform(get("/rate/EuR").accept(MediaType.APPLICATION_JSON))
-                                     .andExpect(status().isOk())
-                                     .andExpect(request().asyncStarted())
-                                     .andExpect(request().asyncResult(instanceOf(DogePoolException.class)))
-                                     .andReturn();
+	@Test
+	public void testRateBadCurrencyBadCase() throws Exception {
+		// Note: the configuration of test has a timeout of 6 seconds, which
+		// will always succeed
+		MvcResult mvcResult = mockMvc.perform(get("/rate/EuR").accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andExpect(request().asyncResult(instanceOf(DogePoolException.class)))
+				.andReturn();
 
-        mockMvc.perform(asyncDispatch(mvcResult))
-               .andExpect(status().isNotFound())
-               .andExpect(content().string(containsString("Unknown currency EuR")));
-    }
+		mockMvc.perform(asyncDispatch(mvcResult))
+				.andExpect(status().isNotFound())
+				.andExpect(content().string(containsString("Unknown currency EuR")));
+	}
+
 }

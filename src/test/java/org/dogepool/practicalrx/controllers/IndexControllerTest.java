@@ -28,28 +28,28 @@ import org.springframework.web.servlet.ModelAndView;
 @WebAppConfiguration
 public class IndexControllerTest {
 
-    @Autowired
-    private WebApplicationContext webApplicationContext;
+	@Autowired
+	private WebApplicationContext webApplicationContext;
 
-    private MockMvc mockMvc;
+	private MockMvc mockMvc;
 
-    @Before
-    public void setup() throws Exception {
-        this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-    }
+	@Before
+	public void setup() throws Exception {
+		this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+	}
 
+	@Test
+	public void testIndex() throws Exception {
+		MvcResult mvcResult = mockMvc.perform(get("/"))
+				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andExpect(request().asyncResult(instanceOf(ModelAndView.class)))
+				.andReturn();
 
-    @Test
-    public void testIndex() throws Exception {
-        MvcResult mvcResult = mockMvc.perform(get("/"))
-                .andExpect(status().isOk())
-                .andExpect(request().asyncStarted())
-                .andExpect(request().asyncResult(instanceOf(ModelAndView.class)))
-                .andReturn();
+		mockMvc.perform(asyncDispatch(mvcResult))
+				.andExpect(status().isOk())
+				.andExpect(model().attributeHasNoErrors("model"))
+				.andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML));
+	}
 
-        mockMvc.perform(asyncDispatch(mvcResult))
-                .andExpect(status().isOk())
-                .andExpect(model().attributeHasNoErrors("model"))
-                .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML));
-    }
 }

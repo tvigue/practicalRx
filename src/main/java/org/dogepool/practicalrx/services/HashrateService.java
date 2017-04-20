@@ -10,15 +10,15 @@ import rx.Observable;
 @Service
 public class HashrateService {
 
-    /**
-     * @param user
-     * @return the last known gigahash/sec hashrate for the given user
-     */
-    public Observable<Double> hashrateFor(User user) {
-        if (user.equals(User.USER)) {
-            return Observable.just(1.234);
-        }
-        return Observable.just(user.displayName)
-                .map(n -> n.length() / 100d);
-    }
+	/**
+	 * @param user
+	 * @return the last known gigahash/sec hashrate for the given user
+	 */
+	public Observable<Double> hashrateFor(User user) {
+		if (user.equals(User.USER)) {
+			return Observable.just(1.234);
+		}
+		return Observable.just(user.displayName).map(n -> n.length() / 100d);
+	}
+
 }

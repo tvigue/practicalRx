@@ -3,58 +3,65 @@ package org.dogepool.practicalrx.error;
 import org.springframework.http.HttpStatus;
 
 /**
- * An exception that the dogepool API can raise in case of a problem (see {@link ErrorCategory}).
+ * An exception that the dogepool API can raise in case of a problem (see
+ * {@link ErrorCategory}).
  */
 public class DogePoolException extends RuntimeException {
 
-    public final HttpStatus httpStatus;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 
-    public final ErrorCategory errorCategory;
+	public final HttpStatus httpStatus;
 
-    public final int errorCode;
+	public final ErrorCategory errorCategory;
 
-    public DogePoolException(String message, Error error, HttpStatus httpStatus) {
-        this(message, error.code, error.category, httpStatus, null);
-    }
+	public final int errorCode;
 
-    public DogePoolException(String message, Error error, HttpStatus httpStatus, Throwable cause) {
-        this(message, error.code, error.category, httpStatus, cause);
-    }
+	public DogePoolException(String message, Error error, HttpStatus httpStatus) {
+		this(message, error.code, error.category, httpStatus, null);
+	}
 
-    public DogePoolException(String message, int errorCode, ErrorCategory errorCategory, HttpStatus httpStatus,
-            Throwable cause) {
-        super(message, cause);
-        this.httpStatus = httpStatus;
-        this.errorCategory = errorCategory;
-        this.errorCode = errorCode;
-    }
+	public DogePoolException(String message, Error error, HttpStatus httpStatus, Throwable cause) {
+		this(message, error.code, error.category, httpStatus, cause);
+	}
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
+	public DogePoolException(String message, int errorCode, ErrorCategory errorCategory, HttpStatus httpStatus,
+			Throwable cause) {
+		super(message, cause);
+		this.httpStatus = httpStatus;
+		this.errorCategory = errorCategory;
+		this.errorCode = errorCode;
+	}
 
-        DogePoolException that = (DogePoolException) o;
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (o == null || getClass() != o.getClass()) {
+			return false;
+		}
 
-        if (errorCode != that.errorCode) {
-            return false;
-        }
-        if (httpStatus != that.httpStatus) {
-            return false;
-        }
-        return errorCategory == that.errorCategory;
+		DogePoolException that = (DogePoolException) o;
 
-    }
+		if (errorCode != that.errorCode) {
+			return false;
+		}
+		if (httpStatus != that.httpStatus) {
+			return false;
+		}
+		return errorCategory == that.errorCategory;
 
-    @Override
-    public int hashCode() {
-        int result = httpStatus.hashCode();
-        result = 31 * result + errorCategory.hashCode();
-        result = 31 * result + errorCode;
-        return result;
-    }
+	}
+
+	@Override
+	public int hashCode() {
+		int result = httpStatus.hashCode();
+		result = 31 * result + errorCategory.hashCode();
+		result = 31 * result + errorCode;
+		return result;
+	}
+
 }

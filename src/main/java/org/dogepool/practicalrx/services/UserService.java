@@ -27,41 +27,40 @@ import rx.Observable;
 @Service
 public class UserService {
 
-    @Autowired(required = false)
-    private Bucket couchbaseBucket;
+	@Autowired(required = false)
+	private Bucket couchbaseBucket;
 
-    @Value("${store.enableFindAll:false}")
-    private boolean useCouchbaseForFindAll;
+	@Value("${store.enableFindAll:false}")
+	private boolean useCouchbaseForFindAll;
 
-    public Observable<User> getUser(long id) {
-        return findAll()
-                .filter(u -> u.id == id)
-                .take(1);
-    }
+	public Observable<User> getUser(long id) {
+		return findAll().filter(u -> u.id == id).take(1);
+	}
 
-    public Observable<User> getUserByLogin(String login) {
-        return findAll()
-                .filter(u -> login.equals(u.nickname))
-                .take(1);
-    }
+	public Observable<User> getUserByLogin(String login) {
+		return findAll().filter(u -> login.equals(u.nickname)).take(1);
+	}
 
-    public Observable<User> findAll() {
-        if (useCouchbaseForFindAll && couchbaseBucket != null) {
-            try {
-                Statement statement = Select.select("avatarId", "bio", "displayName", "id", "nickname").from(i(couchbaseBucket.name()))
-                                            .where(x("type").eq(s("user")))/*.groupBy(x("displayName"))*/;
-                N1qlQueryResult queryResult = couchbaseBucket.query(statement);
-                List<User> users = new ArrayList<User>();
-                for (N1qlQueryRow qr : queryResult) {
-                    users.add(User.fromJsonObject(qr.value()));
-                }
-                return Observable.from(users);
-            } catch (Exception e) {
-                return Observable.error(new DogePoolException("Error while getting list of users from database",
-                        Error.DATABASE, HttpStatus.INTERNAL_SERVER_ERROR, e));
-            }
-        } else {
-            return Observable.just(User.USER, User.OTHERUSER);
-        }
-    }
+	public Observable<User> findAll() {
+		if (useCouchbaseForFindAll && couchbaseBucket != null) {
+			try {
+				Statement statement = Select.select("avatarId", "bio", "displayName", "id", "nickname")
+						.from(i(couchbaseBucket.name()))
+						.where(x("type")
+								.eq(s("user")))/* .groupBy(x("displayName")) */;
+				N1qlQueryResult queryResult = couchbaseBucket.query(statement);
+				List<User> users = new ArrayList<User>();
+				for (N1qlQueryRow qr : queryResult) {
+					users.add(User.fromJsonObject(qr.value()));
+				}
+				return Observable.from(users);
+			} catch (Exception e) {
+				return Observable.error(new DogePoolException("Error while getting list of users from database",
+						Error.DATABASE, HttpStatus.INTERNAL_SERVER_ERROR, e));
+			}
+		} else {
+			return Observable.just(User.USER, User.OTHERUSER);
+		}
+	}
+
 }

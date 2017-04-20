@@ -13,16 +13,15 @@ import org.springframework.web.context.request.async.DeferredResult;
 @RequestMapping(value = "/rate", produces = MediaType.APPLICATION_JSON_VALUE)
 public class RateController {
 
-    @Autowired
-    private ExchangeRateService service;
+	@Autowired
+	private ExchangeRateService service;
 
-    @RequestMapping("{moneyTo}")
-    public DeferredResult rate(@PathVariable String moneyTo) {
-        DeferredResult<ExchangeRate> result = new DeferredResult<>();
-        service.dogeToCurrencyExchangeRate(moneyTo)
-                .map(rate -> new ExchangeRate("DOGE", moneyTo, rate))
-                .subscribe(exchangeRate -> result.setResult(exchangeRate),
-                        error -> result.setErrorResult(error));
-        return result;
-    }
+	@RequestMapping("{moneyTo}")
+	public DeferredResult<ExchangeRate> rate(@PathVariable String moneyTo) {
+		DeferredResult<ExchangeRate> result = new DeferredResult<>();
+		service.dogeToCurrencyExchangeRate(moneyTo).map(rate -> new ExchangeRate("DOGE", moneyTo, rate)).subscribe(
+				exchangeRate -> result.setResult(exchangeRate), error -> result.setErrorResult(error));
+		return result;
+	}
+
 }
