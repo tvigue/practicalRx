@@ -14,6 +14,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.servlet.ModelAndView;
 
 import rx.Observable;
+import rx.Single;
 
 /**
  * A utility controller that displays the welcome message as HTML on root
@@ -35,7 +36,7 @@ public class IndexController {
 	private ExchangeRateService exchangeRateService;
 
 	@RequestMapping("/")
-	public DeferredResult<ModelAndView> index(Map<String, Object> model) {
+	public Single<DeferredResult<ModelAndView>> index(Map<String, Object> model) {
 		DeferredResult<ModelAndView> deferredResult = new DeferredResult<>();
 
 		// prepare the error catching observable for currency rates
@@ -61,9 +62,10 @@ public class IndexController {
 				});
 
 		// populate the model and call the template asynchronously
-		modelZip.subscribe(idx -> deferredResult.setResult(new ModelAndView("index", "model", idx)),
-				error -> deferredResult.setErrorResult(error));
-		return deferredResult;
+		return modelZip.map(idx -> {
+			deferredResult.setResult(new ModelAndView("index", "model", idx));
+			return deferredResult;
+		}).doOnError(error -> deferredResult.setErrorResult(error)).toSingle();
 	}
 
 }
