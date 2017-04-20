@@ -22,6 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import rx.Observable;
+import rx.Single;
 import rx.schedulers.Schedulers;
 
 @Controller(value = "/miner")
@@ -46,10 +47,10 @@ public class UserProfileController {
 	private RestTemplate restTemplate;
 
 	@RequestMapping(value = "/miner/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public DeferredResult<UserProfile> profile(@PathVariable int id) {
+	public Single<DeferredResult<UserProfile>> profile(@PathVariable int id) {
 		DeferredResult<UserProfile> deferred = new DeferredResult<>();
 
-		userService.getUser(id)
+		return userService.getUser(id)
 				.single()
 				.onErrorResumeNext(Observable
 						.error(new DogePoolException("Unknown miner", Error.UNKNOWN_USER, HttpStatus.NOT_FOUND)))
@@ -74,16 +75,19 @@ public class UserProfileController {
 					}
 				})
 				.subscribeOn(Schedulers.io())
-				.subscribe(userProfile -> deferred.setResult(userProfile), error -> deferred.setErrorResult(error));
-
-		return deferred;
+				.map(userProfile -> {
+					deferred.setResult(userProfile);
+					return deferred;
+				})
+				.doOnError(error -> deferred.setErrorResult(error))
+				.toSingle();
 	}
 
 	@RequestMapping(value = "/miner/{id}", produces = MediaType.TEXT_HTML_VALUE)
-	public DeferredResult<String> miner(Map<String, Object> model, @PathVariable int id) {
+	public Single<DeferredResult<String>> miner(Map<String, Object> model, @PathVariable int id) {
 		DeferredResult<String> deferred = new DeferredResult<>();
 
-		userService.getUser(id)
+		return userService.getUser(id)
 				.single()
 				.onErrorResumeNext(Observable
 						.error(new DogePoolException("Unknown miner", Error.UNKNOWN_USER, HttpStatus.NOT_FOUND)))
@@ -117,10 +121,13 @@ public class UserProfileController {
 					}
 				})
 				.subscribeOn(Schedulers.io())
-				.subscribe(minerModel -> model.put("minerModel", minerModel), error -> deferred.setErrorResult(error),
-						() -> deferred.setResult("miner"));
-
-		return deferred;
+				.map(minerModel -> {
+					model.put("minerModel", minerModel);
+					return deferred;
+				})
+				.doOnError(error -> deferred.setErrorResult(error))
+				.doOnCompleted(() -> deferred.setResult("miner"))
+				.toSingle();
 	}
 
 }
