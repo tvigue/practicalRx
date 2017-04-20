@@ -19,6 +19,9 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import rx.Observable;
+import rx.Single;
+
 @RestController
 @RequestMapping(value = "/pool", produces = MediaType.APPLICATION_JSON_VALUE)
 public class PoolController {
@@ -39,61 +42,71 @@ public class PoolController {
 	private StatService statService;
 
 	@RequestMapping("/ladder/hashrate")
-	public List<UserStat> ladderByHashrate() {
-		return rankingService.getLadderByHashrate().toList().toBlocking().first();
+	public Single<List<UserStat>> ladderByHashrate() {
+		return rankingService.getLadderByHashrate().toList().toSingle();
 	}
 
 	@RequestMapping("/ladder/coins")
-	public List<UserStat> ladderByCoins() {
-		return rankingService.getLadderByCoins().toList().toBlocking().first();
+	public Single<List<UserStat>> ladderByCoins() {
+		return rankingService.getLadderByCoins().toList().toSingle();
 	}
 
 	@RequestMapping("/hashrate")
-	public Map<String, Object> globalHashRate() {
+	public Single<Map<String, Object>> globalHashRate() {
 		Map<String, Object> json = new HashMap<>(2);
-		double ghashrate = poolRateService.poolGigaHashrate().toBlocking().first();
-		if (ghashrate < 1) {
-			json.put("unit", "MHash/s");
-			json.put("hashrate", ghashrate * 100d);
-		} else {
-			json.put("unit", "GHash/s");
-			json.put("hashrate", ghashrate);
-		}
-		return json;
+		Observable<Double> ghashrate = poolRateService.poolGigaHashrate();
+		return ghashrate.map(d -> {
+			if (d < 1) {
+				json.put("unit", "MHash/s");
+				json.put("hashrate", d * 100d);
+			} else {
+				json.put("unit", "GHash/s");
+				json.put("hashrate", d);
+			}
+			return json;
+		}).toSingle();
 	}
 
 	@RequestMapping("/miners")
-	public Map<String, Object> miners() {
-		int allUsers = userService.findAll().count().toBlocking().first();
-		int miningUsers = poolService.miningUsers().count().toBlocking().first();
-		Map<String, Object> json = new HashMap<>(2);
-		json.put("totalUsers", allUsers);
-		json.put("totalMiningUsers", miningUsers);
-		return json;
+	public Single<Map<String, Object>> miners() {
+		Observable<Integer> allUsers = userService.findAll().count();
+		Observable<Integer> miningUsers = poolService.miningUsers().count();
+		Observable<Map<String, Object>> result = Observable.zip(allUsers, miningUsers, (allU, miningU) -> {
+			Map<String, Object> json = new HashMap<>(2);
+			json.put("totalUsers", allU);
+			json.put("totalMiningUsers", miningU);
+			return json;
+		});
+		return result.toSingle();
 	}
 
 	@RequestMapping("/miners/active")
-	public List<User> activeMiners() {
-		return poolService.miningUsers().toList().toBlocking().first();
+	public Single<List<User>> activeMiners() {
+		return poolService.miningUsers().toList().toSingle();
 	}
 
 	@RequestMapping("/lastblock")
-	public Map<String, Object> lastBlock() {
-		LocalDateTime found = statService.lastBlockFoundDate().toBlocking().first();
-		Duration foundAgo = Duration.between(found, LocalDateTime.now());
+	public Single<Map<String, Object>> lastBlock() {
+		Observable<LocalDateTime> found = statService.lastBlockFoundDate();
+		Observable<User> foundBy;
 
-		User foundBy;
 		try {
-			foundBy = statService.lastBlockFoundBy().toBlocking().first();
+			foundBy = statService.lastBlockFoundBy();
 		} catch (IndexOutOfBoundsException e) {
 			System.err.println("WARNING: StatService failed to return the last user to find a coin");
-			foundBy = new User(-1, "BAD USER", "Bad User from StatService, please ignore", "", null);
+			foundBy = Observable.just(new User(-1, "BAD USER", "Bad User from StatService, please ignore", "", null));
 		}
-		Map<String, Object> json = new HashMap<>(2);
-		json.put("foundOn", found.format(DateTimeFormatter.ISO_DATE_TIME));
-		json.put("foundAgo", foundAgo.toMinutes());
-		json.put("foundBy", foundBy);
-		return json;
+
+		Observable<Map<String, Object>> result = Observable.zip(found, foundBy, (f, fB) -> {
+			Duration foundAgo = Duration.between(f, LocalDateTime.now());
+			Map<String, Object> json = new HashMap<>(2);
+			json.put("foundOn", f.format(DateTimeFormatter.ISO_DATE_TIME));
+			json.put("foundAgo", foundAgo.toMinutes());
+			json.put("foundBy", fB);
+			return json;
+		});
+
+		return result.toSingle();
 	}
 
 }
