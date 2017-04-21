@@ -1,7 +1,9 @@
 package org.dogepool.practicalrx.controllers;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.dogepool.practicalrx.Main;
@@ -13,6 +15,7 @@ import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -36,15 +39,23 @@ public class SearchControllerTest {
 		String expected = "[{\"id\":1,\"nickname\":\"richUser\",\"displayName\":\"Richie Rich\","
 				+ "\"bio\":\"I'm rich I have dogecoin\",\"avatarId\":\"45678\",\"type\":\"user\"}]";
 
-		mockMvc.perform(get("/search/user/{pattern}", "richie"))
+		MvcResult mvcResult = mockMvc.perform(get("/search/user/{pattern}", "richie"))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().json(expected));
 	}
 
 	@Test
 	public void testSearchByNameNoResult() throws Exception {
-		mockMvc.perform(get("/search/user/{pattern}", "alfred"))
+		MvcResult mvcResult = mockMvc.perform(get("/search/user/{pattern}", "alfred"))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+		
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().json("[]"));
 	}
 
@@ -54,15 +65,23 @@ public class SearchControllerTest {
 				+ "\"bio\":\"I'm rich I have dogecoin\",\"avatarId\":\"45678\",\"type\":\"user\"},"
 				+ "\"hashrate\":-1.0,\"totalCoinsMined\":12}]";
 
-		mockMvc.perform(get("/search/user/coins/{min}", 10))
+		MvcResult mvcResult = mockMvc.perform(get("/search/user/coins/{min}", 10))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+		
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().json(expected));
 	}
 
 	@Test
 	public void testSearchByCoinsMinNoMatch() throws Exception {
-		mockMvc.perform(get("/search/user/coins/{min}", 1200))
+		MvcResult mvcResult = mockMvc.perform(get("/search/user/coins/{min}", 1200))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+		
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().json("[]"));
 	}
 
@@ -72,22 +91,34 @@ public class SearchControllerTest {
 				+ "\"bio\":\"I'm rich I have dogecoin\",\"avatarId\":\"45678\",\"type\":\"user\"},"
 				+ "\"hashrate\":-1.0,\"totalCoinsMined\":12}]";
 
-		mockMvc.perform(get("/search/user/coins/{min}/{max}", 10, 13))
+		MvcResult mvcResult = mockMvc.perform(get("/search/user/coins/{min}/{max}", 10, 13))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+		
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().json(expected));
 	}
 
 	@Test
 	public void testSearchByCoinsMinMaxNoMinMatch() throws Exception {
-		mockMvc.perform(get("/search/user/coins/{min}/{max}", 13, 14))
+		MvcResult mvcResult = mockMvc.perform(get("/search/user/coins/{min}/{max}", 13, 14))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+		
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().json("[]"));
 	}
 
 	@Test
 	public void testSearchByCoinsMinMaxNoMaxMatch() throws Exception {
-		mockMvc.perform(get("/search/user/coins/{min}/{max}", 1, 11))
+		MvcResult mvcResult = mockMvc.perform(get("/search/user/coins/{min}/{max}", 1, 11))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+		
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().json("[]"));
 	}
 

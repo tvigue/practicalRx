@@ -1,5 +1,9 @@
 package org.dogepool.practicalrx.internal.config;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -22,6 +26,7 @@ public class CouchbaseStorageConfiguration {
 	@ConditionalOnProperty("store.enable")
 	public Cluster couchbaseCluster(@Value("#{'${store.nodes:127.0.0.1}'.split(',')}") String... nodes) {
 		CouchbaseEnvironment env = DefaultCouchbaseEnvironment.builder()
+				.connectTimeout(1000 * 60)
 				// .queryEnabled(useCouchbaseForFindAll)
 				.build();
 		return CouchbaseCluster.create(env, nodes);
@@ -33,7 +38,7 @@ public class CouchbaseStorageConfiguration {
 	public Bucket couchbaseBucket(Cluster cluster, @Value("${store.bucket:default}") String bucket,
 			@Value("${store.bucket.password:}") String password) {
 
-		return cluster.openBucket(bucket, password);
+		return cluster.openBucket(bucket, password, 60, SECONDS);
 	}
 
 }

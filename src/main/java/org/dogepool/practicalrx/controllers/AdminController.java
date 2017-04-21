@@ -46,7 +46,7 @@ public class AdminController {
 				.flatMap(u -> poolService.connectUser(u))
 				.flatMap(b -> poolService.miningUsers())
 				.toList()
-				.map(l -> ResponseEntity.ok(l))
+				.map(l -> ResponseEntity.accepted().body(l))
 				.toSingle();
 	}
 
@@ -58,7 +58,7 @@ public class AdminController {
 						Error.BAD_USER, HttpStatus.NOT_FOUND)))
 				.flatMap(u -> poolService.disconnectUser(u))
 				.flatMap(b -> poolService.miningUsers().toList())
-				.map(l -> ResponseEntity.ok(l))
+				.map(l -> ResponseEntity.accepted().body(l))
 				.toSingle();
 	}
 

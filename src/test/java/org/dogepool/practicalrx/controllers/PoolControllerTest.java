@@ -1,8 +1,10 @@
 package org.dogepool.practicalrx.controllers;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.dogepool.practicalrx.Main;
@@ -15,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -43,8 +46,12 @@ public class PoolControllerTest {
 				+ "\"hashrate\":0.11,\"totalCoinsMined\":12}]";
 		System.out.println(expected);
 
-		mockMvc.perform(get("/pool/ladder/hashrate"))
+		MvcResult mvcResult = mockMvc.perform(get("/pool/ladder/hashrate"))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expected));
 	}
@@ -58,8 +65,12 @@ public class PoolControllerTest {
 				+ "\"avatarId\":\"12434\",\"type\":\"user\"},\"hashrate\":1.234,\"totalCoinsMined\":0}]";
 		System.out.println(expected);
 
-		mockMvc.perform(get("/pool/ladder/coins"))
+		MvcResult mvcResult = mockMvc.perform(get("/pool/ladder/coins"))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expected));
 	}
@@ -68,8 +79,12 @@ public class PoolControllerTest {
 	public void testGlobalHashRate() throws Exception {
 		String expected = "{\"hashrate\":1.234,\"unit\":\"GHash/s\"}";
 
-		mockMvc.perform(get("/pool/hashrate"))
+		MvcResult mvcResult = mockMvc.perform(get("/pool/hashrate"))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expected));
 	}
@@ -78,8 +93,12 @@ public class PoolControllerTest {
 	public void testMiners() throws Exception {
 		String expected = "{\"totalMiningUsers\":1,\"totalUsers\":2}";
 
-		mockMvc.perform(get("/pool/miners"))
+		MvcResult mvcResult = mockMvc.perform(get("/pool/miners"))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expected));
 	}
@@ -90,8 +109,12 @@ public class PoolControllerTest {
 				+ "\"bio\":\"Story of my life.\\nEnd of Story.\",\"avatarId\":\"12434\",\"type\":\"user\"}]";
 		System.out.println(expected);
 
-		mockMvc.perform(get("/pool/miners/active"))
+		MvcResult mvcResult = mockMvc.perform(get("/pool/miners/active"))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().json(expected));
 	}
@@ -99,8 +122,12 @@ public class PoolControllerTest {
 	@Test
 	public void testLastBlock() throws Exception {
 		// there's some part of randomness in this one
-		mockMvc.perform(get("/pool/lastblock"))
+		MvcResult mvcResult = mockMvc.perform(get("/pool/lastblock"))
 				.andExpect(status().isOk())
+				.andExpect(request().asyncStarted())
+				.andReturn();
+
+		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
 				.andExpect(content().string(containsString("\"foundAgo\"")))
 				.andExpect(content().string(containsString("\"foundBy\"")))
