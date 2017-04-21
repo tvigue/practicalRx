@@ -19,7 +19,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.context.request.async.DeferredResult;
 
 import rx.Observable;
 import rx.Single;
@@ -47,9 +46,7 @@ public class UserProfileController {
 	private RestTemplate restTemplate;
 
 	@RequestMapping(value = "/miner/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public Single<DeferredResult<UserProfile>> profile(@PathVariable int id) {
-		DeferredResult<UserProfile> deferred = new DeferredResult<>();
-
+	public Single<UserProfile> profile(@PathVariable int id) {
 		return userService.getUser(id)
 				.single()
 				.onErrorResumeNext(Observable
@@ -75,18 +72,11 @@ public class UserProfileController {
 					}
 				})
 				.subscribeOn(Schedulers.io())
-				.map(userProfile -> {
-					deferred.setResult(userProfile);
-					return deferred;
-				})
-				.doOnError(error -> deferred.setErrorResult(error))
 				.toSingle();
 	}
 
 	@RequestMapping(value = "/miner/{id}", produces = MediaType.TEXT_HTML_VALUE)
-	public Single<DeferredResult<String>> miner(Map<String, Object> model, @PathVariable int id) {
-		DeferredResult<String> deferred = new DeferredResult<>();
-
+	public Single<String> miner(Map<String, Object> model, @PathVariable int id) {
 		return userService.getUser(id)
 				.single()
 				.onErrorResumeNext(Observable
@@ -123,10 +113,8 @@ public class UserProfileController {
 				.subscribeOn(Schedulers.io())
 				.map(minerModel -> {
 					model.put("minerModel", minerModel);
-					return deferred;
+					return "miner";
 				})
-				.doOnError(error -> deferred.setErrorResult(error))
-				.doOnCompleted(() -> deferred.setResult("miner"))
 				.toSingle();
 	}
 

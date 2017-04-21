@@ -7,7 +7,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.context.request.async.DeferredResult;
 
 import rx.Single;
 
@@ -19,15 +18,9 @@ public class RateController {
 	private ExchangeRateService service;
 
 	@RequestMapping("{moneyTo}")
-	public Single<DeferredResult<ExchangeRate>> rate(@PathVariable String moneyTo) {
-		DeferredResult<ExchangeRate> result = new DeferredResult<>();
+	public Single<ExchangeRate> rate(@PathVariable String moneyTo) {
 		return service.dogeToCurrencyExchangeRate(moneyTo)
 				.map(rate -> new ExchangeRate("DOGE", moneyTo, rate))
-				.map(exchangeRate -> {
-					result.setResult(exchangeRate);
-					return result;
-				})
-				.doOnError(error -> result.setErrorResult(error))
 				.toSingle();
 	}
 

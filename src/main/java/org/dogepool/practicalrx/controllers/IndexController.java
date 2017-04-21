@@ -10,7 +10,6 @@ import org.dogepool.practicalrx.views.models.IndexModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.servlet.ModelAndView;
 
 import rx.Observable;
@@ -36,9 +35,7 @@ public class IndexController {
 	private ExchangeRateService exchangeRateService;
 
 	@RequestMapping("/")
-	public Single<DeferredResult<ModelAndView>> index(Map<String, Object> model) {
-		DeferredResult<ModelAndView> deferredResult = new DeferredResult<>();
-
+	public Single<ModelAndView> index(Map<String, Object> model) {
 		// prepare the error catching observable for currency rates
 		Observable<String> doge2usd = exchangeRateService.dogeToCurrencyExchangeRate("USD")
 				.map(rate -> "1 DOGE = " + rate + "$")
@@ -63,9 +60,8 @@ public class IndexController {
 
 		// populate the model and call the template asynchronously
 		return modelZip.map(idx -> {
-			deferredResult.setResult(new ModelAndView("index", "model", idx));
-			return deferredResult;
-		}).doOnError(error -> deferredResult.setErrorResult(error)).toSingle();
+			return new ModelAndView("index", "model", idx);
+		}).toSingle();
 	}
 
 }
