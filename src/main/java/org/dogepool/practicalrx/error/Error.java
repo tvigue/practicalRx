@@ -7,7 +7,7 @@ public enum Error {
 	BAD_CURRENCY(2, ErrorCategory.EXCHANGE_RATE),
 	UNKNOWN_USER(3, ErrorCategory.USERS),
 	RANK_HASH(4, ErrorCategory.RANKING),
-	ANK_COIN(5, ErrorCategory.RANKING),
+	RANK_COIN(5, ErrorCategory.RANKING),
 	DATABASE(100, ErrorCategory.EXTERNAL_SERVICES);
 
 	public final int code;
