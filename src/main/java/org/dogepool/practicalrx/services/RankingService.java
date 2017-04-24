@@ -1,12 +1,10 @@
 package org.dogepool.practicalrx.services;
 
-import java.util.Collections;
-import java.util.List;
-
 import org.dogepool.practicalrx.domain.User;
 import org.dogepool.practicalrx.domain.UserStat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import rx.Observable;
 
 /**
@@ -48,8 +46,7 @@ public class RankingService {
 	}
 
 	protected Observable<UserStat> rankByHashrate() {
-		List<UserStat> allStats = statService.getAllStats().toList().toBlocking().single();
-		Collections.sort(allStats, (o1, o2) -> {
+		return statService.getAllStats().toSortedList((o1, o2) -> {
 			double h1 = o1.hashrate;
 			double h2 = o2.hashrate;
 			double diff = h2 - h1;
@@ -58,13 +55,11 @@ public class RankingService {
 			} else {
 				return diff > 0d ? 1 : -1;
 			}
-		});
-		return Observable.from(allStats);
+		}).flatMap(Observable::from);
 	}
 
 	protected Observable<UserStat> rankByCoins() {
-		List<UserStat> allStats = statService.getAllStats().toList().toBlocking().single();
-		Collections.sort(allStats, (o1, o2) -> {
+		return statService.getAllStats().toSortedList((o1, o2) -> {
 			long c1 = o1.totalCoinsMined;
 			long c2 = o2.totalCoinsMined;
 			long diff = c2 - c1;
@@ -73,8 +68,7 @@ public class RankingService {
 			} else {
 				return diff > 0L ? 1 : -1;
 			}
-		});
-		return Observable.from(allStats);
+		}).flatMap(Observable::from);
 	}
 
 }
