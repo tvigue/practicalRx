@@ -14,7 +14,7 @@ public class CoinService {
 		if (user.equals(User.OTHERUSER)) {
 			return Observable.just(12L);
 		} else {
-			return Observable.just(0L);
+			return Observable.just(user.displayName).map(n -> n.length() / 2L);
 		}
 	}
 

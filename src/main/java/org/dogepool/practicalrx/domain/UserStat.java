@@ -17,4 +17,9 @@ public class UserStat {
 		this.totalCoinsMined = totalCoinsMined;
 	}
 
+	@Override
+	public String toString() {
+		return "UserStat [user=" + user.toString() + ", hashrate=" + hashrate + ", totalCoinsMined=" + totalCoinsMined + "]";
+	}
+
 }
