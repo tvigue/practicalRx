@@ -1,10 +1,8 @@
 package org.dogepool.practicalrx;
 
 import java.io.File;
-import java.util.List;
 
 import org.dogepool.practicalrx.domain.User;
-import org.dogepool.practicalrx.domain.UserStat;
 import org.dogepool.practicalrx.services.ExchangeRateService;
 import org.dogepool.practicalrx.services.PoolRateService;
 import org.dogepool.practicalrx.services.PoolService;
@@ -22,6 +20,8 @@ import com.couchbase.client.java.document.JsonDocument;
 
 @SpringBootApplication
 public class Main {
+
+	private static int count = 1;
 
 	public static void main(String[] args) {
 		checkConfig();
@@ -84,19 +84,19 @@ public class Main {
 			PoolRateService poolRateService, ExchangeRateService exchangeRateService) {
 		return args -> {
 			// connect USER automatically
-			userService.getUser(0).flatMap(u -> poolService.connectUser(u)).toBlocking().first();
+			userService.getUser(0).flatMap(u -> poolService.connectUser(u)).subscribe();
 
 			// gather data
-			List<UserStat> hashLadder = rankinService.getLadderByHashrate().toList().toBlocking().first();
-			List<UserStat> coinsLadder = rankinService.getLadderByCoins().toList().toBlocking().first();
 			String poolName = poolService.poolName();
-			int miningUserCount = poolService.miningUsers().count().toBlocking().first();
-			double poolRate = poolRateService.poolGigaHashrate().toBlocking().first();
 
 			// display welcome screen in console
 			System.out.println("Welcome to " + poolName + " dogecoin mining pool!");
-			System.out.println(
-					miningUserCount + " users currently mining, for a global hashrate of " + poolRate + " GHash/s");
+			poolService.miningUsers().count().subscribe(miningUserCount -> System.out.print(miningUserCount),
+					err -> System.out.print(err));
+			System.out.print(" users currently mining, for a global hashrate of ");
+			poolRateService.poolGigaHashrate().subscribe(poolRate -> System.out.print(poolRate),
+					err -> System.out.print(err));
+			System.out.println(" GHash/s");
 
 			exchangeRateService.dogeToCurrencyExchangeRate("USD").subscribe(
 					r -> System.out.println("1 DOGE = " + r + "$"),
@@ -106,17 +106,17 @@ public class Main {
 					e -> System.out.println("1 DOGE = ??€, couldn't get the exchange rate - " + e));
 
 			System.out.println("\n----- TOP 10 Miners by Hashrate -----");
-			int count = 1;
-			for (UserStat userStat : hashLadder) {
-				System.out.println(count++ + ": " + userStat.user.nickname + ", " + userStat.hashrate + " GHash/s");
-			}
+			rankinService.getLadderByHashrate().toList().subscribe(hashLadder -> {
+				hashLadder.forEach(userStat -> System.out
+						.println(count++ + ": " + userStat.user.nickname + ", " + userStat.hashrate + " GHash/s"));
+			}, err -> System.out.println(count++ + ": ?, ? GHash/s\terror: " + err));
 
 			System.out.println("\n----- TOP 10 Miners by Coins Found -----");
 			count = 1;
-			for (UserStat userStat : coinsLadder) {
-				System.out.println(
-						count++ + ": " + userStat.user.nickname + ", " + userStat.totalCoinsMined + " dogecoins");
-			}
+			rankinService.getLadderByCoins().subscribe(
+					userStat -> System.out.println(
+							count++ + ": " + userStat.user.nickname + ", " + userStat.totalCoinsMined + " dogecoins"),
+					err -> System.out.println(count++ + ": ?, ? dogecoins\terror: " + err));
 		};
 	}
 
