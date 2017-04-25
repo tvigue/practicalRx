@@ -113,7 +113,7 @@ public class SearchControllerTest {
 
 	@Test
 	public void testSearchByCoinsMinMaxNoMaxMatch() throws Exception {
-		MvcResult mvcResult = mockMvc.perform(get("/search/user/coins/{min}/{max}", 1, 11))
+		MvcResult mvcResult = mockMvc.perform(get("/search/user/coins/{min}/{max}", 5, 11))
 				.andExpect(status().isOk())
 				.andExpect(request().asyncStarted())
 				.andReturn();

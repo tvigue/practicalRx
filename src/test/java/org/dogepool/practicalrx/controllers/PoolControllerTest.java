@@ -40,7 +40,7 @@ public class PoolControllerTest {
 	public void testLadderByHashrate() throws Exception {
 		String expected = "[{\"user\":{\"id\":0,\"nickname\":\"user0\",\"displayName\":\"Test User\","
 				+ "\"bio\":\"Story of my life.\\nEnd of Story.\",\"avatarId\":\"12434\",\"type\":\"user\"},"
-				+ "\"hashrate\":1.234,\"totalCoinsMined\":0},"
+				+ "\"hashrate\":1.234,\"totalCoinsMined\":4},"
 				+ "{\"user\":{\"id\":1,\"nickname\":\"richUser\",\"displayName\":\"Richie Rich\","
 				+ "\"bio\":\"I'm rich I have dogecoin\",\"avatarId\":\"45678\",\"type\":\"user\"},"
 				+ "\"hashrate\":0.11,\"totalCoinsMined\":12}]";
@@ -62,7 +62,7 @@ public class PoolControllerTest {
 				+ "\"bio\":\"I'm rich I have dogecoin\",\"avatarId\":\"45678\",\"type\":\"user\"},\"hashrate\":0.11,"
 				+ "\"totalCoinsMined\":12},{\"user\":{\"id\":0,\"nickname\":\"user0\",\"displayName\":\"Test User\","
 				+ "\"bio\":\"Story of my life.\\nEnd of Story.\","
-				+ "\"avatarId\":\"12434\",\"type\":\"user\"},\"hashrate\":1.234,\"totalCoinsMined\":0}]";
+				+ "\"avatarId\":\"12434\",\"type\":\"user\"},\"hashrate\":1.234,\"totalCoinsMined\":4}]";
 		System.out.println(expected);
 
 		MvcResult mvcResult = mockMvc.perform(get("/pool/ladder/coins"))
