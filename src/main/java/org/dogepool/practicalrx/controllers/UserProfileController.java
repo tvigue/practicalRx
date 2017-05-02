@@ -2,7 +2,6 @@ package org.dogepool.practicalrx.controllers;
 
 import java.util.Map;
 
-import org.dogepool.practicalrx.domain.User;
 import org.dogepool.practicalrx.domain.UserProfile;
 import org.dogepool.practicalrx.error.DogePoolException;
 import org.dogepool.practicalrx.error.Error;
@@ -21,7 +20,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestTemplate;
 
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 

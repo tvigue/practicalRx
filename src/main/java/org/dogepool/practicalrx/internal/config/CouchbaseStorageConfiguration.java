@@ -2,8 +2,6 @@ package org.dogepool.practicalrx.internal.config;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import java.util.concurrent.TimeUnit;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
