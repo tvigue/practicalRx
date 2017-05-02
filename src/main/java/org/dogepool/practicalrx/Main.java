@@ -51,52 +51,8 @@ public class Main {
 		return args -> {
 			JsonDocument u1 = JsonDocument.create(String.valueOf(User.USER.id), User.USER.toJsonObject());
 			JsonDocument uo = JsonDocument.create(String.valueOf(User.OTHERUSER.id), User.OTHERUSER.toJsonObject());
-			// JsonDocument u2 =
-			// JsonDocument.create(String.valueOf(User.USER2.id),
-			// User.USER2.toJsonObject());
-			// JsonDocument u3 =
-			// JsonDocument.create(String.valueOf(User.USER3.id),
-			// User.USER3.toJsonObject());
-			// JsonDocument u4 =
-			// JsonDocument.create(String.valueOf(User.USER4.id),
-			// User.USER4.toJsonObject());
-			// JsonDocument u5 =
-			// JsonDocument.create(String.valueOf(User.USER5.id),
-			// User.USER5.toJsonObject());
-			// JsonDocument u6 =
-			// JsonDocument.create(String.valueOf(User.USER6.id),
-			// User.USER6.toJsonObject());
-			// JsonDocument u7 =
-			// JsonDocument.create(String.valueOf(User.USER7.id),
-			// User.USER7.toJsonObject());
-			// JsonDocument u8 =
-			// JsonDocument.create(String.valueOf(User.USER8.id),
-			// User.USER8.toJsonObject());
-			// JsonDocument u9 =
-			// JsonDocument.create(String.valueOf(User.USER9.id),
-			// User.USER9.toJsonObject());
-			// JsonDocument u10 =
-			// JsonDocument.create(String.valueOf(User.USER10.id),
-			// User.USER10.toJsonObject());
-			// JsonDocument u11 =
-			// JsonDocument.create(String.valueOf(User.USER11.id),
-			// User.USER11.toJsonObject());
-			// JsonDocument u12 =
-			// JsonDocument.create(String.valueOf(User.USER12.id),
-			// User.USER12.toJsonObject());
 			couchbaseBucket.upsert(u1);
 			couchbaseBucket.upsert(uo);
-			// couchbaseBucket.upsert(u2);
-			// couchbaseBucket.upsert(u3);
-			// couchbaseBucket.upsert(u4);
-			// couchbaseBucket.upsert(u5);
-			// couchbaseBucket.upsert(u6);
-			// couchbaseBucket.upsert(u7);
-			// couchbaseBucket.upsert(u8);
-			// couchbaseBucket.upsert(u9);
-			// couchbaseBucket.upsert(u10);
-			// couchbaseBucket.upsert(u11);
-			// couchbaseBucket.upsert(u12);
 		};
 	}
 

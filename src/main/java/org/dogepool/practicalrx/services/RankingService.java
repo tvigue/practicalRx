@@ -5,7 +5,8 @@ import org.dogepool.practicalrx.domain.UserStat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import rx.Observable;
+import io.reactivex.Observable;
+import io.reactivex.functions.Predicate;
 
 /**
  * Service to get ladders and find a user's rankings in the pool.
@@ -23,7 +24,10 @@ public class RankingService {
 	 *         established it'll be ranked last.
 	 */
 	public Observable<Integer> rankByHashrate(User user) {
-		return rankByHashrate().takeUntil(stat -> stat.user.equals(user)).count();
+		return rankByHashrate().takeUntil((Predicate<UserStat>) stat -> stat.user.equals(user))
+				.count()
+				.map(l -> l.intValue())
+				.toObservable();
 	}
 
 	/**
@@ -34,7 +38,10 @@ public class RankingService {
 	 *         found, it will be ranked last.
 	 */
 	public Observable<Integer> rankByCoins(User user) {
-		return rankByCoins().takeUntil(userStat -> user.equals(userStat.user)).count();
+		return rankByCoins().takeUntil((Predicate<UserStat>) userStat -> user.equals(userStat.user))
+				.count()
+				.map(l -> l.intValue())
+				.toObservable();
 	}
 
 	public Observable<UserStat> getLadderByHashrate() {
@@ -55,7 +62,7 @@ public class RankingService {
 			} else {
 				return diff > 0d ? 1 : -1;
 			}
-		}).flatMap(Observable::from);
+		}).toObservable().flatMap(Observable::fromIterable);
 	}
 
 	protected Observable<UserStat> rankByCoins() {
@@ -68,7 +75,7 @@ public class RankingService {
 			} else {
 				return diff > 0L ? 1 : -1;
 			}
-		}).flatMap(Observable::from);
+		}).toObservable().flatMap(Observable::fromIterable);
 	}
 
 }

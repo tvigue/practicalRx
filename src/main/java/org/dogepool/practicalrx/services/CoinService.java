@@ -2,7 +2,7 @@ package org.dogepool.practicalrx.services;
 
 import org.dogepool.practicalrx.domain.User;
 import org.springframework.stereotype.Service;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * Service for getting info on coins mined by users.

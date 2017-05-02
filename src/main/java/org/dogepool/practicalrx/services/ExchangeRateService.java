@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * A facade service to get DOGE to USD and DOGE to other currencies exchange
@@ -49,7 +49,7 @@ public class ExchangeRateService {
 			try {
 				Double rate = restTemplate.getForObject(dogeUrl, Double.class);
 				sub.onNext(rate);
-				sub.onCompleted();
+				sub.onComplete();
 			} catch (RestClientException e) {
 				sub.onError(new DogePoolException("Unable to reach doge rate service at " + dogeUrl,
 						Error.UNREACHABLE_SERVICE, HttpStatus.REQUEST_TIMEOUT));
@@ -72,7 +72,7 @@ public class ExchangeRateService {
 							HttpStatus.UNPROCESSABLE_ENTITY));
 				}
 				sub.onNext(rate);
-				sub.onCompleted();
+				sub.onComplete();
 			} catch (HttpStatusCodeException e) {
 				sub.onError(
 						new DogePoolException("Error processing currency in free API : " + e.getResponseBodyAsString(),
@@ -100,7 +100,7 @@ public class ExchangeRateService {
 							HttpStatus.UNPROCESSABLE_ENTITY));
 				}
 				sub.onNext(rate);
-				sub.onCompleted();
+				sub.onComplete();
 			} catch (HttpStatusCodeException e) {
 				sub.onError(
 						new DogePoolException("Error processing currency in paid API : " + e.getResponseBodyAsString(),
@@ -109,7 +109,7 @@ public class ExchangeRateService {
 				sub.onError(new DogePoolException("Unable to reach paid currency exchange service at " + exchangeUrl,
 						Error.UNREACHABLE_SERVICE, HttpStatus.REQUEST_TIMEOUT));
 			}
-		}).doOnNext(r -> adminService.addCost(1)).doOnCompleted(
+		}).doOnNext(r -> adminService.addCost(1)).doOnComplete(
 				() -> System.out.println("CALLED PAID EXCHANGE RATE SERVICE FOR 1$"));
 	}
 

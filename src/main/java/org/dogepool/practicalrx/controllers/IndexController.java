@@ -12,8 +12,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
-import rx.Observable;
-import rx.Single;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 
 /**
  * A utility controller that displays the welcome message as HTML on root
@@ -37,21 +37,23 @@ public class IndexController {
 	@RequestMapping("/")
 	public Single<ModelAndView> index(Map<String, Object> model) {
 		// prepare the error catching observable for currency rates
-		Observable<String> doge2usd = exchangeRateService.dogeToCurrencyExchangeRate("USD")
+		Single<String> doge2usd = exchangeRateService.dogeToCurrencyExchangeRate("USD")
 				.map(rate -> "1 DOGE = " + rate + "$")
-				.onErrorReturn(e -> "1 DOGE = ??$, couldn't get the exchange rate - " + e);
-		Observable<String> doge2eur = exchangeRateService.dogeToCurrencyExchangeRate("EUR")
+				.onErrorReturn(e -> "1 DOGE = ??$, couldn't get the exchange rate - " + e)
+				.single("?");
+		Single<String> doge2eur = exchangeRateService.dogeToCurrencyExchangeRate("EUR")
 				.map(rate -> "1 DOGE = " + rate + "€")
-				.onErrorReturn(e -> "1 DOGE = ??€, couldn't get the exchange rate - " + e);
+				.onErrorReturn(e -> "1 DOGE = ??€, couldn't get the exchange rate - " + e)
+				.single("?");
 		// prepare a model
-		Observable<IndexModel> modelZip = Observable.zip(rankService.getLadderByHashrate().toList(),
+		Single<IndexModel> modelZip = Single.zip(rankService.getLadderByHashrate().toList(),
 				rankService.getLadderByCoins().toList(), poolService.miningUsers().count(),
-				poolRateService.poolGigaHashrate(), doge2usd, doge2eur, (lh, lc, muc, pgr, d2u, d2e) -> {
+				poolRateService.poolGigaHashrate().single(0D), doge2usd, doge2eur, (lh, lc, muc, pgr, d2u, d2e) -> {
 					IndexModel idxModel = new IndexModel();
 					idxModel.setPoolName(poolService.poolName());
 					idxModel.setHashLadder(lh);
 					idxModel.setCoinsLadder(lc);
-					idxModel.setMiningUserCount(muc);
+					idxModel.setMiningUserCount(muc.intValue());
 					idxModel.setGigaHashrate(pgr);
 					idxModel.setDogeToUsdMessage(d2u);
 					idxModel.setDogeToEurMessage(d2e);
@@ -61,7 +63,7 @@ public class IndexController {
 		// populate the model and call the template asynchronously
 		return modelZip.map(idx -> {
 			return new ModelAndView("index", "model", idx);
-		}).toSingle();
+		});
 	}
 
 }

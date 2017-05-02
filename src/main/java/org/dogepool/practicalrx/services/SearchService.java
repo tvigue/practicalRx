@@ -4,7 +4,7 @@ import org.dogepool.practicalrx.domain.User;
 import org.dogepool.practicalrx.domain.UserStat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * A service to search for users by name, login and other criteria.

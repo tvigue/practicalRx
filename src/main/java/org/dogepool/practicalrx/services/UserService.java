@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import rx.Observable;
+import io.reactivex.Observable;
 
 /**
  * Service to get user information.
@@ -53,7 +53,7 @@ public class UserService {
 				for (N1qlQueryRow qr : queryResult) {
 					users.add(User.fromJsonObject(qr.value()));
 				}
-				return Observable.from(users);
+				return Observable.fromIterable(users);
 			} catch (Exception e) {
 				return Observable.error(new DogePoolException("Error while getting list of users from database",
 						Error.DATABASE, HttpStatus.INTERNAL_SERVER_ERROR, e));

@@ -21,8 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import rx.Observable;
-import rx.Single;
+import io.reactivex.Single;
 
 @RestController
 @RequestMapping(value = "/admin", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -40,26 +39,23 @@ public class AdminController {
 	@RequestMapping(method = RequestMethod.POST, value = "/mining/{id}", consumes = MediaType.ALL_VALUE)
 	public Single<ResponseEntity<List<User>>> registerMiningUser(@PathVariable("id") long id) {
 		return userService.getUser(id)
-				.last()
-				.onErrorResumeNext(e -> Observable.error(new DogePoolException("User cannot mine, not authenticated",
+				.lastOrError()
+				.onErrorResumeNext(e -> Single.error(new DogePoolException("User cannot mine, not authenticated",
 						Error.BAD_USER, HttpStatus.NOT_FOUND)))
-				.flatMap(u -> poolService.connectUser(u))
-				.flatMap(b -> poolService.miningUsers())
-				.toList()
-				.map(l -> ResponseEntity.accepted().body(l))
-				.toSingle();
+				.flatMap(u -> poolService.connectUser(u).single(Boolean.TRUE))
+				.flatMap(b -> poolService.miningUsers().toList())
+				.map(l -> ResponseEntity.accepted().body(l));
 	}
 
 	@RequestMapping(method = RequestMethod.DELETE, value = "mining/{id}", consumes = MediaType.ALL_VALUE)
 	public Single<ResponseEntity<List<User>>> deregisterMiningUser(@PathVariable("id") long id) {
 		return userService.getUser(id)
-				.last()
-				.onErrorResumeNext(e -> Observable.error(new DogePoolException("User isn't mining, not authenticated",
+				.lastOrError()
+				.onErrorResumeNext(e -> Single.error(new DogePoolException("User isn't mining, not authenticated",
 						Error.BAD_USER, HttpStatus.NOT_FOUND)))
-				.flatMap(u -> poolService.disconnectUser(u))
+				.flatMap(u -> poolService.disconnectUser(u).single(Boolean.TRUE))
 				.flatMap(b -> poolService.miningUsers().toList())
-				.map(l -> ResponseEntity.accepted().body(l))
-				.toSingle();
+				.map(l -> ResponseEntity.accepted().body(l));
 	}
 
 	@RequestMapping("/cost/{year}-{month}")
@@ -83,7 +79,7 @@ public class AdminController {
 			json.put("currency", "USD");
 			json.put("currencySign", "$");
 			return json;
-		}).toSingle();
+		}).single(new HashMap<>());
 	}
 
 }

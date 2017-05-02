@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import rx.Single;
+import io.reactivex.Single;
 
 @RestController
 @RequestMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -22,7 +22,7 @@ public class SearchController {
 
 	@RequestMapping("user/{pattern}")
 	public Single<List<User>> searchByName(@PathVariable String pattern) {
-		return service.findByName(pattern).toList().toSingle();
+		return service.findByName(pattern).toList();
 	}
 
 	@RequestMapping("user/coins/{minCoins}")
@@ -32,7 +32,7 @@ public class SearchController {
 
 	@RequestMapping("user/coins/{minCoins}/{maxCoins}")
 	private Single<List<UserStat>> searchByCoins(@PathVariable long minCoins, @PathVariable long maxCoins) {
-		return service.findByCoins(minCoins, maxCoins).toList().toSingle();
+		return service.findByCoins(minCoins, maxCoins).toList();
 	}
 
 }

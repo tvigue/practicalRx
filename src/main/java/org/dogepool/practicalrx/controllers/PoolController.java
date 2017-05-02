@@ -19,8 +19,8 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import rx.Observable;
-import rx.Single;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 
 @RestController
 @RequestMapping(value = "/pool", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -43,18 +43,18 @@ public class PoolController {
 
 	@RequestMapping("/ladder/hashrate")
 	public Single<List<UserStat>> ladderByHashrate() {
-		return rankingService.getLadderByHashrate().toList().toSingle();
+		return rankingService.getLadderByHashrate().toList();
 	}
 
 	@RequestMapping("/ladder/coins")
 	public Single<List<UserStat>> ladderByCoins() {
-		return rankingService.getLadderByCoins().toList().toSingle();
+		return rankingService.getLadderByCoins().toList();
 	}
 
 	@RequestMapping("/hashrate")
 	public Single<Map<String, Object>> globalHashRate() {
 		Map<String, Object> json = new HashMap<>(2);
-		Observable<Double> ghashrate = poolRateService.poolGigaHashrate();
+		Single<Double> ghashrate = poolRateService.poolGigaHashrate().single(0D);
 		return ghashrate.map(d -> {
 			if (d < 1) {
 				json.put("unit", "MHash/s");
@@ -64,40 +64,40 @@ public class PoolController {
 				json.put("hashrate", d);
 			}
 			return json;
-		}).toSingle();
+		});
 	}
 
 	@RequestMapping("/miners")
 	public Single<Map<String, Object>> miners() {
-		Observable<Integer> allUsers = userService.findAll().count();
-		Observable<Integer> miningUsers = poolService.miningUsers().count();
-		Observable<Map<String, Object>> result = Observable.zip(allUsers, miningUsers, (allU, miningU) -> {
+		Single<Integer> allUsers = userService.findAll().count().map(l -> l.intValue());
+		Single<Integer> miningUsers = poolService.miningUsers().count().map(l -> l.intValue());
+		Single<Map<String, Object>> result = Single.zip(allUsers, miningUsers, (allU, miningU) -> {
 			Map<String, Object> json = new HashMap<>(2);
 			json.put("totalUsers", allU);
 			json.put("totalMiningUsers", miningU);
 			return json;
 		});
-		return result.toSingle();
+		return result;
 	}
 
 	@RequestMapping("/miners/active")
 	public Single<List<User>> activeMiners() {
-		return poolService.miningUsers().toList().toSingle();
+		return poolService.miningUsers().toList();
 	}
 
 	@RequestMapping("/lastblock")
 	public Single<Map<String, Object>> lastBlock() {
-		Observable<LocalDateTime> found = statService.lastBlockFoundDate();
-		Observable<User> foundBy;
+		Single<LocalDateTime> found = statService.lastBlockFoundDate().single(LocalDateTime.now());
+		Single<User> foundBy;
 
 		try {
-			foundBy = statService.lastBlockFoundBy();
+			foundBy = statService.lastBlockFoundBy().single(User.USER);
 		} catch (IndexOutOfBoundsException e) {
 			System.err.println("WARNING: StatService failed to return the last user to find a coin");
-			foundBy = Observable.just(new User(-1, "BAD USER", "Bad User from StatService, please ignore", "", null));
+			foundBy = Single.just(new User(-1, "BAD USER", "Bad User from StatService, please ignore", "", null));
 		}
 
-		Observable<Map<String, Object>> result = Observable.zip(found, foundBy, (f, fB) -> {
+		Single<Map<String, Object>> result = Single.zip(found, foundBy, (f, fB) -> {
 			Duration foundAgo = Duration.between(f, LocalDateTime.now());
 			Map<String, Object> json = new HashMap<>(2);
 			json.put("foundOn", f.format(DateTimeFormatter.ISO_DATE_TIME));
@@ -106,7 +106,7 @@ public class PoolController {
 			return json;
 		});
 
-		return result.toSingle();
+		return result;
 	}
 
 }
