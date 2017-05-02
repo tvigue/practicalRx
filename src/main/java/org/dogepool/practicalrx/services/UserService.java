@@ -4,19 +4,6 @@ import static com.couchbase.client.java.query.dsl.Expression.i;
 import static com.couchbase.client.java.query.dsl.Expression.s;
 import static com.couchbase.client.java.query.dsl.Expression.x;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.query.AsyncN1qlQueryResult;
-import com.couchbase.client.java.query.AsyncN1qlQueryRow;
-import com.couchbase.client.java.query.N1qlQueryResult;
-import com.couchbase.client.java.query.N1qlQueryRow;
-import com.couchbase.client.java.query.Select;
-import com.couchbase.client.java.query.Statement;
-
-import hu.akarnokd.rxjava.interop.RxJavaInterop;
-
 import org.dogepool.practicalrx.domain.User;
 import org.dogepool.practicalrx.error.DogePoolException;
 import org.dogepool.practicalrx.error.Error;
@@ -24,6 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import com.couchbase.client.java.Bucket;
+import com.couchbase.client.java.query.AsyncN1qlQueryResult;
+import com.couchbase.client.java.query.AsyncN1qlQueryRow;
+import com.couchbase.client.java.query.Select;
+import com.couchbase.client.java.query.Statement;
+
+import hu.akarnokd.rxjava.interop.RxJavaInterop;
 import io.reactivex.Observable;
 
 /**
