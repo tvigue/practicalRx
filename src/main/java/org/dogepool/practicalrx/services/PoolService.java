@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.dogepool.practicalrx.domain.User;
 import org.springframework.stereotype.Service;
+
 import rx.Observable;
 
 /**
@@ -24,7 +25,7 @@ public class PoolService {
 	}
 
 	public Observable<Boolean> connectUser(User user) {
-		return Observable.<Boolean>create(s -> {
+		return Observable.<Boolean>unsafeCreate(s -> {
 			connectedUsers.add(user);
 			s.onNext(Boolean.TRUE);
 			s.onCompleted();
@@ -32,7 +33,7 @@ public class PoolService {
 	}
 
 	public Observable<Boolean> disconnectUser(User user) {
-		return Observable.<Boolean>create(s -> {
+		return Observable.<Boolean>unsafeCreate(s -> {
 			connectedUsers.remove(user);
 			s.onNext(Boolean.TRUE);
 			s.onCompleted();

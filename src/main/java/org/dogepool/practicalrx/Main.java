@@ -1,8 +1,10 @@
 package org.dogepool.practicalrx;
 
 import java.io.File;
+import java.util.List;
 
 import org.dogepool.practicalrx.domain.User;
+import org.dogepool.practicalrx.domain.UserStat;
 import org.dogepool.practicalrx.services.ExchangeRateService;
 import org.dogepool.practicalrx.services.PoolRateService;
 import org.dogepool.practicalrx.services.PoolService;
@@ -17,6 +19,8 @@ import org.springframework.core.annotation.Order;
 
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.document.JsonDocument;
+
+import rx.Observable;
 
 @SpringBootApplication
 public class Main {
@@ -51,52 +55,8 @@ public class Main {
 		return args -> {
 			JsonDocument u1 = JsonDocument.create(String.valueOf(User.USER.id), User.USER.toJsonObject());
 			JsonDocument uo = JsonDocument.create(String.valueOf(User.OTHERUSER.id), User.OTHERUSER.toJsonObject());
-			// JsonDocument u2 =
-			// JsonDocument.create(String.valueOf(User.USER2.id),
-			// User.USER2.toJsonObject());
-			// JsonDocument u3 =
-			// JsonDocument.create(String.valueOf(User.USER3.id),
-			// User.USER3.toJsonObject());
-			// JsonDocument u4 =
-			// JsonDocument.create(String.valueOf(User.USER4.id),
-			// User.USER4.toJsonObject());
-			// JsonDocument u5 =
-			// JsonDocument.create(String.valueOf(User.USER5.id),
-			// User.USER5.toJsonObject());
-			// JsonDocument u6 =
-			// JsonDocument.create(String.valueOf(User.USER6.id),
-			// User.USER6.toJsonObject());
-			// JsonDocument u7 =
-			// JsonDocument.create(String.valueOf(User.USER7.id),
-			// User.USER7.toJsonObject());
-			// JsonDocument u8 =
-			// JsonDocument.create(String.valueOf(User.USER8.id),
-			// User.USER8.toJsonObject());
-			// JsonDocument u9 =
-			// JsonDocument.create(String.valueOf(User.USER9.id),
-			// User.USER9.toJsonObject());
-			// JsonDocument u10 =
-			// JsonDocument.create(String.valueOf(User.USER10.id),
-			// User.USER10.toJsonObject());
-			// JsonDocument u11 =
-			// JsonDocument.create(String.valueOf(User.USER11.id),
-			// User.USER11.toJsonObject());
-			// JsonDocument u12 =
-			// JsonDocument.create(String.valueOf(User.USER12.id),
-			// User.USER12.toJsonObject());
 			couchbaseBucket.upsert(u1);
 			couchbaseBucket.upsert(uo);
-			// couchbaseBucket.upsert(u2);
-			// couchbaseBucket.upsert(u3);
-			// couchbaseBucket.upsert(u4);
-			// couchbaseBucket.upsert(u5);
-			// couchbaseBucket.upsert(u6);
-			// couchbaseBucket.upsert(u7);
-			// couchbaseBucket.upsert(u8);
-			// couchbaseBucket.upsert(u9);
-			// couchbaseBucket.upsert(u10);
-			// couchbaseBucket.upsert(u11);
-			// couchbaseBucket.upsert(u12);
 		};
 	}
 
@@ -106,39 +66,49 @@ public class Main {
 			PoolRateService poolRateService, ExchangeRateService exchangeRateService) {
 		return args -> {
 			// connect USER automatically
-			userService.getUser(0).flatMap(u -> poolService.connectUser(u)).subscribe();
+			Observable<Boolean> user = userService.getUser(0).flatMap(u -> poolService.connectUser(u));
+			user.subscribe();
+			user.toBlocking().first();
 
 			// gather data
 			String poolName = poolService.poolName();
 
 			// display welcome screen in console
 			System.out.println("Welcome to " + poolName + " dogecoin mining pool!");
-			poolService.miningUsers().count().subscribe(miningUserCount -> System.out.print(miningUserCount),
-					err -> System.out.print(err));
+			Observable<Integer> nbUser = poolService.miningUsers().count();
+			nbUser.subscribe(miningUserCount -> System.out.print(miningUserCount), err -> System.out.print(err));
+			nbUser.toBlocking().first();
 			System.out.print(" users currently mining, for a global hashrate of ");
-			poolRateService.poolGigaHashrate().subscribe(poolRate -> System.out.print(poolRate),
-					err -> System.out.print(err));
+			Observable<Double> hashRateUser = poolRateService.poolGigaHashrate();
+			hashRateUser.subscribe(poolRate -> System.out.print(poolRate), err -> System.out.print(err));
+			hashRateUser.toBlocking().first();
 			System.out.println(" GHash/s");
 
-			exchangeRateService.dogeToCurrencyExchangeRate("USD").subscribe(
-					r -> System.out.println("1 DOGE = " + r + "$"),
+			Observable<Double> doge$ = exchangeRateService.dogeToCurrencyExchangeRate("USD");
+			doge$.subscribe(r -> System.out.println("1 DOGE = " + r + "$"),
 					e -> System.out.println("1 DOGE = ??$, couldn't get the exchange rate - " + e));
-			exchangeRateService.dogeToCurrencyExchangeRate("EUR").subscribe(
-					r -> System.out.println("1 DOGE = " + r + "€"),
+			doge$.toBlocking().first();
+			Observable<Double> doge€ = exchangeRateService.dogeToCurrencyExchangeRate("EUR");
+			doge€.subscribe(r -> System.out.println("1 DOGE = " + r + "€"),
 					e -> System.out.println("1 DOGE = ??€, couldn't get the exchange rate - " + e));
+			doge€.toBlocking().first();
 
 			System.out.println("\n----- TOP 10 Miners by Hashrate -----");
-			rankinService.getLadderByHashrate().toList().subscribe(hashLadder -> {
+			Observable<List<UserStat>> ladderHashRate = rankinService.getLadderByHashrate().toList();
+			ladderHashRate.subscribe(hashLadder -> {
 				hashLadder.forEach(userStat -> System.out
 						.println(count++ + ": " + userStat.user.nickname + ", " + userStat.hashrate + " GHash/s"));
 			}, err -> System.out.println(count++ + ": ?, ? GHash/s\terror: " + err));
+			ladderHashRate.toBlocking().first();
 
 			System.out.println("\n----- TOP 10 Miners by Coins Found -----");
 			count = 1;
-			rankinService.getLadderByCoins().subscribe(
+			Observable<UserStat> ladderCoins = rankinService.getLadderByCoins();
+			ladderCoins.subscribe(
 					userStat -> System.out.println(
 							count++ + ": " + userStat.user.nickname + ", " + userStat.totalCoinsMined + " dogecoins"),
 					err -> System.out.println(count++ + ": ?, ? dogecoins\terror: " + err));
+			ladderCoins.toBlocking().first();
 		};
 	}
 

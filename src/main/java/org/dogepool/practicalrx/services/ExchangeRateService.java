@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+
 import rx.Observable;
 
 /**
@@ -45,7 +46,7 @@ public class ExchangeRateService {
 	}
 
 	private Observable<Double> dogeToDollar() {
-		return Observable.create(sub -> {
+		return Observable.unsafeCreate(sub -> {
 			try {
 				Double rate = restTemplate.getForObject(dogeUrl, Double.class);
 				sub.onNext(rate);
@@ -60,7 +61,7 @@ public class ExchangeRateService {
 	}
 
 	private Observable<Double> dollarToCurrency(String currencyCode) {
-		return Observable.<Double>create(sub -> {
+		return Observable.<Double>unsafeCreate(sub -> {
 			try {
 				Map result = restTemplate.getForObject(exchangeUrl + "/{from}/{to}", Map.class, "USD", currencyCode);
 				Double rate = (Double) result.get("exchangeRate");
@@ -87,7 +88,7 @@ public class ExchangeRateService {
 	}
 
 	private Observable<Double> dollarToCurrencyPaid(String currencyCode) {
-		return Observable.<Double>create(sub -> {
+		return Observable.<Double>unsafeCreate(sub -> {
 			try {
 				Map result = restTemplate.getForObject(exchangeNonfreeUrl + "/{from}/{to}", Map.class, "USD",
 						currencyCode);
