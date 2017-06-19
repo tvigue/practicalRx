@@ -2,7 +2,8 @@ package org.dogepool.practicalrx.services;
 
 import org.dogepool.practicalrx.domain.User;
 import org.springframework.stereotype.Service;
-import io.reactivex.Observable;
+
+import reactor.core.publisher.Flux;
 
 /**
  * Service to retrieve hashrate information of users.
@@ -14,11 +15,11 @@ public class HashrateService {
 	 * @param user
 	 * @return the last known gigahash/sec hashrate for the given user
 	 */
-	public Observable<Double> hashrateFor(User user) {
+	public Flux<Double> hashrateFor(User user) {
 		if (user.equals(User.USER)) {
-			return Observable.just(1.234);
+			return Flux.just(1.234);
 		}
-		return Observable.just(user.displayName).map(n -> n.length() / 100d);
+		return Flux.just(user.displayName).map(n -> n.length() / 100d);
 	}
 
 }

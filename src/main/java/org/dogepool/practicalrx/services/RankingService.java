@@ -5,8 +5,7 @@ import org.dogepool.practicalrx.domain.UserStat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import io.reactivex.Observable;
-import io.reactivex.functions.Predicate;
+import reactor.core.publisher.Flux;
 
 /**
  * Service to get ladders and find a user's rankings in the pool.
@@ -23,11 +22,11 @@ public class RankingService {
 	 * @return the rank of the user in terms of hashrate. If it couldnt' be
 	 *         established it'll be ranked last.
 	 */
-	public Observable<Integer> rankByHashrate(User user) {
-		return rankByHashrate().takeUntil((Predicate<UserStat>) stat -> stat.user.equals(user))
+	public Flux<Integer> rankByHashrate(User user) {
+		return rankByHashrate().takeUntil(stat -> stat.user.equals(user))
 				.count()
 				.map(l -> l.intValue())
-				.toObservable();
+				.flux();
 	}
 
 	/**
@@ -37,23 +36,23 @@ public class RankingService {
 	 * @return the rank of the user in terms of coins found. If user is not
 	 *         found, it will be ranked last.
 	 */
-	public Observable<Integer> rankByCoins(User user) {
-		return rankByCoins().takeUntil((Predicate<UserStat>) userStat -> user.equals(userStat.user))
+	public Flux<Integer> rankByCoins(User user) {
+		return rankByCoins().takeUntil(userStat -> user.equals(userStat.user))
 				.count()
 				.map(l -> l.intValue())
-				.toObservable();
+				.flux();
 	}
 
-	public Observable<UserStat> getLadderByHashrate() {
+	public Flux<UserStat> getLadderByHashrate() {
 		return rankByHashrate().take(10);
 	}
 
-	public Observable<UserStat> getLadderByCoins() {
+	public Flux<UserStat> getLadderByCoins() {
 		return rankByCoins().take(10);
 	}
 
-	protected Observable<UserStat> rankByHashrate() {
-		return statService.getAllStats().toSortedList((o1, o2) -> {
+	protected Flux<UserStat> rankByHashrate() {
+		return statService.getAllStats().sort((o1, o2) -> {
 			double h1 = o1.hashrate;
 			double h2 = o2.hashrate;
 			double diff = h2 - h1;
@@ -62,11 +61,11 @@ public class RankingService {
 			} else {
 				return diff > 0d ? 1 : -1;
 			}
-		}).toObservable().flatMap(Observable::fromIterable);
+		});
 	}
 
-	protected Observable<UserStat> rankByCoins() {
-		return statService.getAllStats().toSortedList((o1, o2) -> {
+	protected Flux<UserStat> rankByCoins() {
+		return statService.getAllStats().sort((o1, o2) -> {
 			long c1 = o1.totalCoinsMined;
 			long c2 = o2.totalCoinsMined;
 			long diff = c2 - c1;
@@ -75,7 +74,7 @@ public class RankingService {
 			} else {
 				return diff > 0L ? 1 : -1;
 			}
-		}).toObservable().flatMap(Observable::fromIterable);
+		});
 	}
 
 }

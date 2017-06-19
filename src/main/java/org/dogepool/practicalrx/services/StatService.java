@@ -8,7 +8,8 @@ import org.dogepool.practicalrx.domain.User;
 import org.dogepool.practicalrx.domain.UserStat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import io.reactivex.Observable;
+
+import reactor.core.publisher.Flux;
 
 /**
  * Service to get stats on the pool, like top 10 ladders for various criteria.
@@ -25,26 +26,26 @@ public class StatService {
 	@Autowired
 	private UserService userService;
 
-	public Observable<UserStat> getAllStats() {
+	public Flux<UserStat> getAllStats() {
 		return userService.findAll().flatMap(u -> {
-			Observable<Double> hr = hashrateService.hashrateFor(u);
-			Observable<Long> co = coinService.totalCoinsMinedBy(u);
+			Flux<Double> hr = hashrateService.hashrateFor(u);
+			Flux<Long> co = coinService.totalCoinsMinedBy(u);
 
-			return Observable.zip(hr, co, (rate, coin) -> new UserStat(u, rate, coin));
+			return Flux.zip(hr, co, (rate, coin) -> new UserStat(u, rate, coin));
 		});
 	}
 
-	public Observable<LocalDateTime> lastBlockFoundDate() {
+	public Flux<LocalDateTime> lastBlockFoundDate() {
 		Random rng = new Random(System.currentTimeMillis());
 		LocalDateTime date = LocalDateTime.now().minus(rng.nextInt(72), ChronoUnit.HOURS);
-		return Observable.just(date);
+		return Flux.just(date);
 	}
 
-	public Observable<User> lastBlockFoundBy() {
+	public Flux<User> lastBlockFoundBy() {
 		final Random rng = new Random(System.currentTimeMillis());
-		return Observable.defer(() -> Observable.just(rng.nextInt(10)))
+		return Flux.defer(() -> Flux.just(rng.nextInt(10)))
 				.doOnNext(i -> System.out.println("ELECTED: #" + i))
-				.flatMap(potentiallyBadIndex -> userService.findAll().elementAt(potentiallyBadIndex).toObservable())
+				.flatMap(potentiallyBadIndex -> userService.findAll().elementAt(potentiallyBadIndex).flux())
 				.retry();
 	}
 

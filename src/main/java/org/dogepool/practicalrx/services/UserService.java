@@ -19,7 +19,9 @@ import com.couchbase.client.java.query.Select;
 import com.couchbase.client.java.query.Statement;
 
 import hu.akarnokd.rxjava.interop.RxJavaInterop;
-import io.reactivex.Observable;
+import io.reactivex.BackpressureStrategy;
+import reactor.adapter.rxjava.RxJava2Adapter;
+import reactor.core.publisher.Flux;
 
 /**
  * Service to get user information.
@@ -33,15 +35,15 @@ public class UserService {
 	@Value("${store.enableFindAll:false}")
 	private boolean useCouchbaseForFindAll;
 
-	public Observable<User> getUser(long id) {
+	public Flux<User> getUser(long id) {
 		return findAll().filter(u -> u.id == id).take(1);
 	}
 
-	public Observable<User> getUserByLogin(String login) {
+	public Flux<User> getUserByLogin(String login) {
 		return findAll().filter(u -> login.equals(u.nickname)).take(1);
 	}
 
-	public Observable<User> findAll() {
+	public Flux<User> findAll() {
 		if (useCouchbaseForFindAll && couchbaseBucket != null) {
 			try {
 				Statement statement = Select.select("avatarId", "bio", "displayName", "id", "nickname")
@@ -49,15 +51,17 @@ public class UserService {
 						.where(x("type")
 								.eq(s("user")))/* .groupBy(x("displayName")) */;
 				rx.Observable<AsyncN1qlQueryResult> queryResult = couchbaseBucket.async().query(statement);
-				return RxJavaInterop.toV2Observable(queryResult.flatMap(AsyncN1qlQueryResult::rows)
-						.map(AsyncN1qlQueryRow::value)
-						.map(qr -> User.fromJsonObject(qr)));
+				return RxJava2Adapter.observableToFlux(
+						RxJavaInterop.toV2Observable(queryResult.flatMap(AsyncN1qlQueryResult::rows)
+								.map(AsyncN1qlQueryRow::value)
+								.map(qr -> User.fromJsonObject(qr))),
+						BackpressureStrategy.ERROR);
 			} catch (Exception e) {
-				return Observable.error(new DogePoolException("Error while getting list of users from database",
+				return Flux.error(new DogePoolException("Error while getting list of users from database",
 						Error.DATABASE, HttpStatus.INTERNAL_SERVER_ERROR, e));
 			}
 		} else {
-			return Observable.just(User.USER, User.OTHERUSER);
+			return Flux.just(User.USER, User.OTHERUSER);
 		}
 	}
 

@@ -6,7 +6,8 @@ import java.time.Month;
 import java.util.concurrent.atomic.LongAdder;
 
 import org.springframework.stereotype.Service;
-import io.reactivex.Observable;
+
+import reactor.core.publisher.Flux;
 
 /**
  * Service for administrative purpose like tracking operational costs.
@@ -20,8 +21,8 @@ public class AdminService {
 		this.currentCosts.add(cost);
 	}
 
-	public Observable<BigInteger> costForMonth(int year, Month month) {
-		return Observable.just(LocalDate.now()).map(now -> {
+	public Flux<BigInteger> costForMonth(int year, Month month) {
+		return Flux.just(LocalDate.now()).map(now -> {
 			if (year == now.getYear() && month == now.getMonth()) {
 				return BigInteger.valueOf(currentCosts.longValue());
 			}

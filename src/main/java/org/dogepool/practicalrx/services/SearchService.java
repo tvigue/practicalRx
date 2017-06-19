@@ -4,7 +4,8 @@ import org.dogepool.practicalrx.domain.User;
 import org.dogepool.practicalrx.domain.UserStat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import io.reactivex.Observable;
+
+import reactor.core.publisher.Flux;
 
 /**
  * A service to search for users by name, login and other criteria.
@@ -26,7 +27,7 @@ public class SearchService {
 	 *            (ignoring case).
 	 * @return the stream of matching users.
 	 */
-	public Observable<User> findByName(String namePattern) {
+	public Flux<User> findByName(String namePattern) {
 		String upperPattern = namePattern.toUpperCase();
 		return userService.findAll().filter(u -> u.displayName.toUpperCase().contains(upperPattern));
 	}
@@ -41,7 +42,7 @@ public class SearchService {
 	 *            considered a match. -1 to ignore.
 	 * @return the stream of matching users.
 	 */
-	public Observable<UserStat> findByCoins(long minCoins, long maxCoins) {
+	public Flux<UserStat> findByCoins(long minCoins, long maxCoins) {
 		return userService.findAll()
 				.flatMap(u -> coinService.totalCoinsMinedBy(u)
 						.filter(coins -> coins >= minCoins && (maxCoins < 0 || coins <= maxCoins))

@@ -11,7 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import io.reactivex.Observable;
+
+import reactor.core.publisher.Flux;
 
 /**
  * A facade service to get DOGE to USD and DOGE to other currencies exchange
@@ -35,32 +36,32 @@ public class ExchangeRateService {
 	@Autowired
 	private RestTemplate restTemplate;
 
-	public Observable<Double> dogeToCurrencyExchangeRate(String targetCurrencyCode) {
-		Observable<Double> dollarToCurrency = dollarToCurrency(targetCurrencyCode)
+	public Flux<Double> dogeToCurrencyExchangeRate(String targetCurrencyCode) {
+		Flux<Double> dollarToCurrency = dollarToCurrency(targetCurrencyCode)
 				.doOnError(e -> System.out.println("FALLING BACK TO NON-FREE EXCHANGE RATE SERVICE"))
-				.onErrorResumeNext(t -> (t instanceof DogePoolException) ? dollarToCurrencyPaid(targetCurrencyCode)
-						: Observable.error(t));
+				.onErrorResume(t -> (t instanceof DogePoolException) ? dollarToCurrencyPaid(targetCurrencyCode)
+						: Flux.error(t));
 
 		return dogeToDollar().zipWith(dollarToCurrency, (doge2usd, usd2currency) -> doge2usd * usd2currency);
 	}
 
-	private Observable<Double> dogeToDollar() {
-		return Observable.create(sub -> {
+	private Flux<Double> dogeToDollar() {
+		return Flux.create(sub -> {
 			try {
 				Double rate = restTemplate.getForObject(dogeUrl, Double.class);
-				sub.onNext(rate);
-				sub.onComplete();
+				sub.next(rate);
+				sub.complete();
 			} catch (RestClientException e) {
-				sub.onError(new DogePoolException("Unable to reach doge rate service at " + dogeUrl,
+				sub.error(new DogePoolException("Unable to reach doge rate service at " + dogeUrl,
 						Error.UNREACHABLE_SERVICE, HttpStatus.REQUEST_TIMEOUT));
 			} catch (Exception e) {
-				sub.onError(e);
+				sub.error(e);
 			}
 		});
 	}
 
-	private Observable<Double> dollarToCurrency(String currencyCode) {
-		return Observable.<Double>create(sub -> {
+	private Flux<Double> dollarToCurrency(String currencyCode) {
+		return Flux.<Double>create(sub -> {
 			try {
 				Map result = restTemplate.getForObject(exchangeUrl + "/{from}/{to}", Map.class, "USD", currencyCode);
 				Double rate = (Double) result.get("exchangeRate");
@@ -68,26 +69,26 @@ public class ExchangeRateService {
 					rate = (Double) result.get("rate");
 
 				if (rate == null) {
-					sub.onError(new DogePoolException("Malformed exchange rate", Error.BAD_CURRENCY,
+					sub.error(new DogePoolException("Malformed exchange rate", Error.BAD_CURRENCY,
 							HttpStatus.UNPROCESSABLE_ENTITY));
 				}
-				sub.onNext(rate);
-				sub.onComplete();
+				sub.next(rate);
+				sub.complete();
 			} catch (HttpStatusCodeException e) {
-				sub.onError(
+				sub.error(
 						new DogePoolException("Error processing currency in free API : " + e.getResponseBodyAsString(),
 								Error.BAD_CURRENCY, e.getStatusCode()));
 			} catch (RestClientException e) {
-				sub.onError(new DogePoolException("Unable to reach free currency exchange service at " + exchangeUrl,
+				sub.error(new DogePoolException("Unable to reach free currency exchange service at " + exchangeUrl,
 						Error.UNREACHABLE_SERVICE, HttpStatus.REQUEST_TIMEOUT));
 			} catch (Exception e) {
-				sub.onError(e);
+				sub.error(e);
 			}
 		});
 	}
 
-	private Observable<Double> dollarToCurrencyPaid(String currencyCode) {
-		return Observable.<Double>create(sub -> {
+	private Flux<Double> dollarToCurrencyPaid(String currencyCode) {
+		return Flux.<Double>create(sub -> {
 			try {
 				Map result = restTemplate.getForObject(exchangeNonfreeUrl + "/{from}/{to}", Map.class, "USD",
 						currencyCode);
@@ -96,17 +97,17 @@ public class ExchangeRateService {
 					rate = (Double) result.get("rate");
 
 				if (rate == null) {
-					sub.onError(new DogePoolException("Malformed exchange rate from paid service", Error.BAD_CURRENCY,
+					sub.error(new DogePoolException("Malformed exchange rate from paid service", Error.BAD_CURRENCY,
 							HttpStatus.UNPROCESSABLE_ENTITY));
 				}
-				sub.onNext(rate);
-				sub.onComplete();
+				sub.next(rate);
+				sub.complete();
 			} catch (HttpStatusCodeException e) {
-				sub.onError(
+				sub.error(
 						new DogePoolException("Error processing currency in paid API : " + e.getResponseBodyAsString(),
 								Error.BAD_CURRENCY, e.getStatusCode()));
 			} catch (RestClientException e) {
-				sub.onError(new DogePoolException("Unable to reach paid currency exchange service at " + exchangeUrl,
+				sub.error(new DogePoolException("Unable to reach paid currency exchange service at " + exchangeUrl,
 						Error.UNREACHABLE_SERVICE, HttpStatus.REQUEST_TIMEOUT));
 			}
 		}).doOnNext(r -> adminService.addCost(1)).doOnComplete(
