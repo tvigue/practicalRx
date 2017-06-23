@@ -19,7 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import io.reactivex.Single;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping(value = "/pool", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -41,19 +41,19 @@ public class PoolController {
 	private StatService statService;
 
 	@RequestMapping("/ladder/hashrate")
-	public Single<List<UserStat>> ladderByHashrate() {
-		return rankingService.getLadderByHashrate().toList();
+	public Mono<List<UserStat>> ladderByHashrate() {
+		return rankingService.getLadderByHashrate().collectList();
 	}
 
 	@RequestMapping("/ladder/coins")
-	public Single<List<UserStat>> ladderByCoins() {
-		return rankingService.getLadderByCoins().toList();
+	public Mono<List<UserStat>> ladderByCoins() {
+		return rankingService.getLadderByCoins().collectList();
 	}
 
 	@RequestMapping("/hashrate")
-	public Single<Map<String, Object>> globalHashRate() {
+	public Mono<Map<String, Object>> globalHashRate() {
 		Map<String, Object> json = new HashMap<>(2);
-		Single<Double> ghashrate = poolRateService.poolGigaHashrate().single(0D);
+		Mono<Double> ghashrate = poolRateService.poolGigaHashrate().single();
 		return ghashrate.map(d -> {
 			if (d < 1) {
 				json.put("unit", "MHash/s");
@@ -67,43 +67,43 @@ public class PoolController {
 	}
 
 	@RequestMapping("/miners")
-	public Single<Map<String, Object>> miners() {
-		Single<Integer> allUsers = userService.findAll().count().map(l -> l.intValue());
-		Single<Integer> miningUsers = poolService.miningUsers().count().map(l -> l.intValue());
-		Single<Map<String, Object>> result = Single.zip(allUsers, miningUsers, (allU, miningU) -> {
+	public Mono<Map<String, Object>> miners() {
+		Mono<Integer> allUsers = userService.findAll().count().map(l -> l.intValue());
+		Mono<Integer> miningUsers = poolService.miningUsers().count().map(l -> l.intValue());
+		Mono<Map<String, Object>> result = Mono.zip(args -> {
 			Map<String, Object> json = new HashMap<>(2);
-			json.put("totalUsers", allU);
-			json.put("totalMiningUsers", miningU);
+			json.put("totalUsers", (Integer) args[0]);
+			json.put("totalMiningUsers", (Integer) args[1]);
 			return json;
-		});
+		}, allUsers, miningUsers);
 		return result;
 	}
 
 	@RequestMapping("/miners/active")
-	public Single<List<User>> activeMiners() {
-		return poolService.miningUsers().toList();
+	public Mono<List<User>> activeMiners() {
+		return poolService.miningUsers().collectList();
 	}
 
 	@RequestMapping("/lastblock")
-	public Single<Map<String, Object>> lastBlock() {
-		Single<LocalDateTime> found = statService.lastBlockFoundDate().single(LocalDateTime.now());
-		Single<User> foundBy;
+	public Mono<Map<String, Object>> lastBlock() {
+		Mono<LocalDateTime> found = statService.lastBlockFoundDate().single(LocalDateTime.now());
+		Mono<User> foundBy;
 
 		try {
 			foundBy = statService.lastBlockFoundBy().single(User.USER);
 		} catch (IndexOutOfBoundsException e) {
 			System.err.println("WARNING: StatService failed to return the last user to find a coin");
-			foundBy = Single.just(new User(-1, "BAD USER", "Bad User from StatService, please ignore", "", null));
+			foundBy = Mono.just(new User(-1, "BAD USER", "Bad User from StatService, please ignore", "", null));
 		}
 
-		Single<Map<String, Object>> result = Single.zip(found, foundBy, (f, fB) -> {
-			Duration foundAgo = Duration.between(f, LocalDateTime.now());
+		Mono<Map<String, Object>> result = Mono.zip(args -> {
+			Duration foundAgo = Duration.between((LocalDateTime) args[0], LocalDateTime.now());
 			Map<String, Object> json = new HashMap<>(2);
-			json.put("foundOn", f.format(DateTimeFormatter.ISO_DATE_TIME));
+			json.put("foundOn", ((LocalDateTime) args[0]).format(DateTimeFormatter.ISO_DATE_TIME));
 			json.put("foundAgo", foundAgo.toMinutes());
-			json.put("foundBy", fB);
+			json.put("foundBy", (User) args[1]);
 			return json;
-		});
+		}, found, foundBy);
 
 		return result;
 	}

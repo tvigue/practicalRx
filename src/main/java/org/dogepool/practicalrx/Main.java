@@ -1,6 +1,7 @@
 package org.dogepool.practicalrx;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 import org.dogepool.practicalrx.domain.User;
@@ -14,14 +15,15 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.annotation.Order;
 
 import com.couchbase.client.java.Bucket;
 import com.couchbase.client.java.document.JsonDocument;
 
-import io.reactivex.Observable;
-import io.reactivex.Single;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @SpringBootApplication
 public class Main {
@@ -67,49 +69,49 @@ public class Main {
 			PoolRateService poolRateService, ExchangeRateService exchangeRateService) {
 		return args -> {
 			// connect USER automatically
-			Observable<Boolean> user = userService.getUser(0).flatMap(u -> poolService.connectUser(u));
+			Flux<Boolean> user = userService.getUser(0).flatMap(u -> poolService.connectUser(u));
 			user.subscribe();
-			user.blockingFirst();
+			user.blockFirst();
 
 			// gather data
 			String poolName = poolService.poolName();
 
 			// display welcome screen in console
 			System.out.println("Welcome to " + poolName + " dogecoin mining pool!");
-			Single<Long> nbUser = poolService.miningUsers().count();
+			Mono<Long> nbUser = poolService.miningUsers().count();
 			nbUser.subscribe(miningUserCount -> System.out.print(miningUserCount), err -> System.out.print(err));
-			nbUser.blockingGet();
+			nbUser.block();
 			System.out.print(" users currently mining, for a global hashrate of ");
-			Observable<Double> hashRateUser = poolRateService.poolGigaHashrate();
+			Flux<Double> hashRateUser = poolRateService.poolGigaHashrate();
 			hashRateUser.subscribe(poolRate -> System.out.print(poolRate), err -> System.out.print(err));
-			hashRateUser.blockingFirst();
+			hashRateUser.blockFirst();
 			System.out.println(" GHash/s");
 
-			Observable<Double> doge$ = exchangeRateService.dogeToCurrencyExchangeRate("USD");
+			Flux<Double> doge$ = exchangeRateService.dogeToCurrencyExchangeRate("USD");
 			doge$.subscribe(r -> System.out.println("1 DOGE = " + r + "$"),
 					e -> System.out.println("1 DOGE = ??$, couldn't get the exchange rate - " + e));
-			doge$.blockingFirst();
-			Observable<Double> doge€ = exchangeRateService.dogeToCurrencyExchangeRate("EUR");
+			doge$.blockFirst();
+			Flux<Double> doge€ = exchangeRateService.dogeToCurrencyExchangeRate("EUR");
 			doge€.subscribe(r -> System.out.println("1 DOGE = " + r + "€"),
 					e -> System.out.println("1 DOGE = ??€, couldn't get the exchange rate - " + e));
-			doge€.blockingFirst();
+			doge€.blockFirst();
 
 			System.out.println("\n----- TOP 10 Miners by Hashrate -----");
-			Single<List<UserStat>> ladderHashRate = rankinService.getLadderByHashrate().toList();
+			Mono<List<UserStat>> ladderHashRate = rankinService.getLadderByHashrate().collectList();
 			ladderHashRate.subscribe(hashLadder -> {
 				hashLadder.forEach(userStat -> System.out
 						.println(count++ + ": " + userStat.user.nickname + ", " + userStat.hashrate + " GHash/s"));
 			}, err -> System.out.println(count++ + ": ?, ? GHash/s\terror: " + err));
-			ladderHashRate.blockingGet();
+			ladderHashRate.block();
 
 			System.out.println("\n----- TOP 10 Miners by Coins Found -----");
 			count = 1;
-			Observable<UserStat> ladderCoins = rankinService.getLadderByCoins();
+			Flux<UserStat> ladderCoins = rankinService.getLadderByCoins();
 			ladderCoins.subscribe(
 					userStat -> System.out.println(
 							count++ + ": " + userStat.user.nickname + ", " + userStat.totalCoinsMined + " dogecoins"),
 					err -> System.out.println(count++ + ": ?, ? dogecoins\terror: " + err));
-			ladderCoins.blockingFirst();
+			ladderCoins.blockFirst();
 		};
 	}
 

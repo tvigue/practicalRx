@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestTemplate;
 
-import io.reactivex.Single;
-import io.reactivex.schedulers.Schedulers;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Controller(value = "/miner")
 public class UserProfileController {
@@ -45,13 +45,13 @@ public class UserProfileController {
 	private RestTemplate restTemplate;
 
 	@RequestMapping(value = "/miner/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public Single<UserProfile> profile(@PathVariable int id) {
+	public Mono<UserProfile> profile(@PathVariable int id) {
 		return userService.getUser(id)
-				.singleOrError()
-				.onErrorResumeNext(
-						Single.error(new DogePoolException("Unknown miner", Error.UNKNOWN_USER, HttpStatus.NOT_FOUND)))
+				.single()
+				.onErrorResume(e -> Mono
+						.error(new DogePoolException("Unknown miner " + e, Error.UNKNOWN_USER, HttpStatus.NOT_FOUND)))
 				// find the avatar's url
-				.flatMap(user -> {
+				.flatMapMany(user -> {
 					ResponseEntity<Map> avatarResponse = restTemplate.getForEntity(avatarBaseUrl + "/" + user.avatarId,
 							Map.class);
 					if (avatarResponse.getStatusCode().is2xxSuccessful()) {
@@ -60,29 +60,31 @@ public class UserProfileController {
 						String smallAvatarUrl = (String) avatarInfo.get("small");
 
 						// complete with other information
-						return Single.zip(hashrateService.hashrateFor(user).single(0D),
-								coinService.totalCoinsMinedBy(user).single(0L),
-								rankingService.rankByHashrate(user).single(0),
-								rankingService.rankByCoins(user).single(0),
+						return Mono.zip(
 								// return the full profile
-								(hash, coins, rankByHash, rankByCoins) -> new UserProfile(user, hash, coins, avatarUrl,
-										smallAvatarUrl, rankByHash, rankByCoins));
+								args -> new UserProfile(user, (Double) args[0], (Long) args[1], avatarUrl,
+										smallAvatarUrl, (Integer) args[2], (Integer) args[3]),
+								hashrateService.hashrateFor(user).single(),
+								coinService.totalCoinsMinedBy(user).single(),
+								rankingService.rankByHashrate(user).single(),
+								rankingService.rankByCoins(user).single());
 					} else {
-						return Single.error(new DogePoolException("Unable to get avatar info",
-								Error.UNREACHABLE_SERVICE, avatarResponse.getStatusCode()));
+						return Mono.error(new DogePoolException("Unable to get avatar info", Error.UNREACHABLE_SERVICE,
+								avatarResponse.getStatusCode()));
 					}
 				})
-				.subscribeOn(Schedulers.io());
+				.subscribeOn(Schedulers.elastic())
+				.single();
 	}
 
 	@RequestMapping(value = "/miner/{id}", produces = MediaType.TEXT_HTML_VALUE)
-	public Single<String> miner(Map<String, Object> model, @PathVariable int id) {
+	public Mono<String> miner(Map<String, Object> model, @PathVariable int id) {
 		return userService.getUser(id)
-				.singleOrError()
-				.onErrorResumeNext(
-						Single.error(new DogePoolException("Unknown miner", Error.UNKNOWN_USER, HttpStatus.NOT_FOUND)))
+				.single()
+				.onErrorResume(e -> Mono
+						.error(new DogePoolException("Unknown miner " + e, Error.UNKNOWN_USER, HttpStatus.NOT_FOUND)))
 				// find the avatar's url
-				.flatMap(user -> {
+				.flatMapMany(user -> {
 					ResponseEntity<Map> avatarResponse = restTemplate.getForEntity(avatarBaseUrl + "/" + user.avatarId,
 							Map.class);
 					if (avatarResponse.getStatusCode().is2xxSuccessful()) {
@@ -91,32 +93,34 @@ public class UserProfileController {
 						String smallAvatarUrl = (String) avatarInfo.get("small");
 
 						// complete with other information
-						return Single.zip(hashrateService.hashrateFor(user).single(0D),
-								coinService.totalCoinsMinedBy(user).single(0L),
-								rankingService.rankByHashrate(user).single(0),
-								rankingService.rankByCoins(user).single(0),
+						return Mono.zip(
 								// create a model for the view
-								(hash, coins, rankByHash, rankByCoins) -> {
+								args -> {
+									// (hash, coins, rankByHash, rankByCoins)
 									MinerModel minerModel = new MinerModel();
 									minerModel.setAvatarUrl(avatarUrl);
 									minerModel.setSmallAvatarUrl(smallAvatarUrl);
 									minerModel.setBio(user.bio);
 									minerModel.setDisplayName(user.displayName);
 									minerModel.setNickname(user.nickname);
-									minerModel.setRankByCoins(rankByCoins);
-									minerModel.setRankByHash(rankByHash);
+									minerModel.setRankByHash((Integer) args[2]);
+									minerModel.setRankByCoins((Integer) args[3]);
 									return minerModel;
-								});
+								}, hashrateService.hashrateFor(user).single(),
+								coinService.totalCoinsMinedBy(user).single(),
+								rankingService.rankByHashrate(user).single(),
+								rankingService.rankByCoins(user).single());
 					} else {
-						return Single.error(new DogePoolException("Unable to get avatar info",
-								Error.UNREACHABLE_SERVICE, avatarResponse.getStatusCode()));
+						return Mono.error(new DogePoolException("Unable to get avatar info", Error.UNREACHABLE_SERVICE,
+								avatarResponse.getStatusCode()));
 					}
 				})
-				.subscribeOn(Schedulers.io())
+				.subscribeOn(Schedulers.elastic())
 				.map(minerModel -> {
 					model.put("minerModel", minerModel);
 					return "miner";
-				});
+				})
+				.single();
 	}
 
 }

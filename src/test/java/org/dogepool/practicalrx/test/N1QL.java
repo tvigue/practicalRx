@@ -109,7 +109,7 @@ public class N1QL {
 	@Before
 	public void before() {
 		CouchbaseEnvironment env = DefaultCouchbaseEnvironment.create();
-		cluster = CouchbaseCluster.create(env, "10.142.161.101");
+		cluster = CouchbaseCluster.create(env, "10.142.162.101");
 		beerSample = cluster.openBucket("beer-sample");
 		// Needed to use N1QL
 		beerSample.query(simple(Index.createPrimaryIndex().on("beer-sample")));

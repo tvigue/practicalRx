@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import io.reactivex.Single;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping(value = "/admin", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -37,41 +37,43 @@ public class AdminController {
 	private AdminService adminService;
 
 	@RequestMapping(method = RequestMethod.POST, value = "/mining/{id}", consumes = MediaType.ALL_VALUE)
-	public Single<ResponseEntity<List<User>>> registerMiningUser(@PathVariable("id") long id) {
+	public Mono<ResponseEntity<List<User>>> registerMiningUser(@PathVariable("id") long id) {
 		return userService.getUser(id)
-				.lastOrError()
-				.onErrorResumeNext(e -> Single.error(new DogePoolException("User cannot mine, not authenticated",
+				.last()
+				.onErrorResume(e -> Mono.error(new DogePoolException("User cannot mine, not authenticated",
 						Error.BAD_USER, HttpStatus.NOT_FOUND)))
-				.flatMap(u -> poolService.connectUser(u).single(Boolean.TRUE))
-				.flatMap(b -> poolService.miningUsers().toList())
-				.map(l -> ResponseEntity.accepted().body(l));
+				.flatMapMany(u -> poolService.connectUser(u).single())
+				.flatMap(b -> poolService.miningUsers().collectList())
+				.map(l -> ResponseEntity.accepted().body(l))
+				.single();
 	}
 
 	@RequestMapping(method = RequestMethod.DELETE, value = "mining/{id}", consumes = MediaType.ALL_VALUE)
-	public Single<ResponseEntity<List<User>>> deregisterMiningUser(@PathVariable("id") long id) {
+	public Mono<ResponseEntity<List<User>>> deregisterMiningUser(@PathVariable("id") long id) {
 		return userService.getUser(id)
-				.lastOrError()
-				.onErrorResumeNext(e -> Single.error(new DogePoolException("User isn't mining, not authenticated",
+				.last()
+				.onErrorResume(e -> Mono.error(new DogePoolException("User isn't mining, not authenticated",
 						Error.BAD_USER, HttpStatus.NOT_FOUND)))
-				.flatMap(u -> poolService.disconnectUser(u).single(Boolean.TRUE))
-				.flatMap(b -> poolService.miningUsers().toList())
-				.map(l -> ResponseEntity.accepted().body(l));
+				.flatMapMany(u -> poolService.disconnectUser(u).single())
+				.flatMap(b -> poolService.miningUsers().collectList())
+				.map(l -> ResponseEntity.accepted().body(l))
+				.single();
 	}
 
 	@RequestMapping("/cost/{year}-{month}")
-	public Single<Map<String, Object>> cost(@PathVariable int year, @PathVariable int month) {
+	public Mono<Map<String, Object>> cost(@PathVariable int year, @PathVariable int month) {
 		Month monthEnum = Month.of(month);
 		return cost(year, monthEnum);
 	}
 
 	@RequestMapping("/cost")
-	public Single<Map<String, Object>> cost() {
+	public Mono<Map<String, Object>> cost() {
 		LocalDate now = LocalDate.now();
 		return cost(now.getYear(), now.getMonth());
 	}
 
 	@RequestMapping("/cost/{year}/{month}")
-	protected Single<Map<String, Object>> cost(@PathVariable int year, @PathVariable Month month) {
+	protected Mono<Map<String, Object>> cost(@PathVariable int year, @PathVariable Month month) {
 		return adminService.costForMonth(year, month).map(cost -> {
 			Map<String, Object> json = new HashMap<>();
 			json.put("month", month + " " + year);
@@ -79,7 +81,7 @@ public class AdminController {
 			json.put("currency", "USD");
 			json.put("currencySign", "$");
 			return json;
-		}).single(new HashMap<>());
+		}).single();
 	}
 
 }
