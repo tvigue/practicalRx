@@ -38,7 +38,7 @@ public class ExchangeRateService {
 
 	public Flux<Double> dogeToCurrencyExchangeRate(String targetCurrencyCode) {
 		Flux<Double> dollarToCurrency = dollarToCurrency(targetCurrencyCode)
-				.doOnError(e -> System.out.println("FALLING BACK TO NON-FREE EXCHANGE RATE SERVICE"))
+				.doOnError(e -> System.out.println("FALLING BACK TO NON-FREE EXCHANGE RATE SERVICE - " + e))
 				.onErrorResume(t -> (t instanceof DogePoolException) ? dollarToCurrencyPaid(targetCurrencyCode)
 						: Flux.error(t));
 

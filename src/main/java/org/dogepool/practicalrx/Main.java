@@ -1,7 +1,6 @@
 package org.dogepool.practicalrx;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 import org.dogepool.practicalrx.domain.User;
@@ -15,7 +14,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.annotation.Order;
 
@@ -50,6 +48,21 @@ public class Main {
 							+ "\n========================================\n");
 		}
 	}
+
+//	@Bean
+//	VelocityEngine velocityEngine() {
+//		VelocityEngine ve = new VelocityEngine();
+//		ve.setProperty("runtime.introspector.uberspect",
+//				"org.dogepool.practicalrx.internal.config.VelocityPublicFieldUberspect");
+//		ve.init();
+//		Template t = ve.getTemplate("/src/main/resources/templates/index.vm");
+//		VelocityContext context = new VelocityContext();
+//		context.put("name", "word");
+//		StringWriter writer = new StringWriter();
+//		t.merge(context, writer);
+//		System.out.println(writer.toString());
+//		return ve;
+//	}
 
 	@Bean
 	@ConditionalOnBean(value = Bucket.class)
