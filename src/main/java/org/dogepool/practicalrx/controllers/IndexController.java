@@ -35,14 +35,14 @@ public class IndexController {
 
 	@Autowired
 	private ExchangeRateService exchangeRateService;
-	
+
 	private static final String PATH = "/error";
 
 	@RequestMapping("/")
-	public ModelAndView index(Map<String, Object> model) {
-		
+	public Mono<ModelAndView> index(Map<String, Object> model) {
+
 		RxJavaHooks.enableAssemblyTracking();
-		
+
 		// prepare the error catching observable for currency rates
 		Mono<String> doge2usd = exchangeRateService.dogeToCurrencyExchangeRate("USD")
 				.map(rate -> "1 DOGE = " + rate + "$")
@@ -66,39 +66,12 @@ public class IndexController {
 		}, rankService.getLadderByHashrate().collectList(), rankService.getLadderByCoins().collectList(),
 				poolService.miningUsers().count(), poolRateService.poolGigaHashrate().single(), doge2usd, doge2eur);
 
+		model.put("test", "test");
+		
 		// populate the model and call the template asynchronously
 		return modelZip.map(idx -> {
 			return new ModelAndView("index", "model", idx);
-		}).block();
-		
-		
-//		System.out.println("HEERRREEE");
-//		IndexModel idxModel = new IndexModel();
-//		idxModel.setPoolName(poolService.poolName());
-//		idxModel.setHashLadder(Arrays.asList(new UserStat(new User(0, "nickname", "displayName", "bio", "avatarId"), 0, 0)));
-//		idxModel.setCoinsLadder(Arrays.asList(new UserStat(new User(0, "nickname", "displayName", "bio", "avatarId"), 0, 0)));
-//		idxModel.setMiningUserCount(0);
-//		idxModel.setGigaHashrate(0D);
-//		idxModel.setDogeToUsdMessage("test");
-//		idxModel.setDogeToEurMessage("test");
-//		System.out.println("HEERRREEE2");
-//		DeferredResult<ModelAndView> deferredResult = new DeferredResult<>();
-//		deferredResult.setResult(new ModelAndView("index", "model", idxModel));
-//		return deferredResult;
-		
-//		VelocityEngine ve = new VelocityEngine();
-//		ve.init();
-//		Template t = ve.getTemplate("/src/main/resources/templates/index.vm");
-//		VelocityContext context = new VelocityContext();
-//		context.put("name", "word");
-//		StringWriter writer = new StringWriter();
-//		t.merge(context, writer);
-//		System.out.println(writer.toString());
-//		
-//		DeferredResult<String> deferredResult = new DeferredResult<>();
-//		deferredResult.setResult(writer.toString());
-//		return deferredResult;
-		
+		});
 	}
 
 }
