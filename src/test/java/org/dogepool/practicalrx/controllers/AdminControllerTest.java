@@ -18,7 +18,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -26,7 +25,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@WebAppConfiguration
 public class AdminControllerTest {
 
 	@Autowired
@@ -58,7 +56,7 @@ public class AdminControllerTest {
 
 		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(status().isAccepted())
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
 				.andExpect(content().string(startsWith("[")));
 	}
 
@@ -81,7 +79,7 @@ public class AdminControllerTest {
 
 		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(status().isAccepted())
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
 				.andExpect(content().string(startsWith("[")));
 	}
 
@@ -94,7 +92,7 @@ public class AdminControllerTest {
 
 		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(status().isOk())
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
 				.andExpect(content().string(containsString("\"cost\"")))
 				.andExpect(content().string(containsString("\"month\"")))
 				.andExpect(content().string(containsString("\"currency\"")))
@@ -111,7 +109,7 @@ public class AdminControllerTest {
 
 		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(status().isOk())
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
 				.andExpect(content().json(
 						"{\"cost\":2115,\"month\":\"JANUARY 2015\"," + "\"currencySign\":\"$\",\"currency\":\"USD\"}"));
 	}
@@ -130,7 +128,7 @@ public class AdminControllerTest {
 
 		mockMvc.perform(asyncDispatch(mvcResult))
 				.andExpect(status().isOk())
-				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
 				.andExpect(content().json(
 						"{\"cost\":2115,\"month\":\"JANUARY 2015\"," + "\"currencySign\":\"$\",\"currency\":\"USD\"}"));
 	}
